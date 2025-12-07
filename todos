@@ -1,0 +1,14 @@
+backend 
+    forgot password functionality
+    clean console logs
+    better error messages
+    CRUD tasks
+
+frontend
+    remove console logs
+    show error on signin/signup  if any from api
+    show otp sent popup or smh
+    if error in auth send user to sign in page
+    make invitation page
+    add settings option
+    
