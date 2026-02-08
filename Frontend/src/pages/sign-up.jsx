@@ -108,14 +108,14 @@ const SignUpForm = () => {
                 {...register("email", { required: "Email is required" })}
                 type="email"
                 placeholder="Enter email"
-                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
               {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
             </div>
 
             <button
               type="submit"
-              className="w-full px-4 py-2 font-semibold text-white bg-indigo-600 rounded-lg shadow hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+              className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none"
             >
               Send OTP
             </button>
@@ -132,14 +132,14 @@ const SignUpForm = () => {
               <input
                 {...register("otp", { required: "OTP is required" })}
                 placeholder="Enter OTP"
-                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
               {errors.otp && <p className="mt-1 text-sm text-red-600">{errors.otp.message}</p>}
             </div>
 
             <button
               type="submit"
-              className="w-full px-4 py-2 font-semibold text-white bg-indigo-600 rounded-lg shadow hover:bg-indigo-700"
+              className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700"
             >
               Verify OTP
             </button>
@@ -150,7 +150,7 @@ const SignUpForm = () => {
               className={`w-full px-4 py-2 mt-2 rounded-lg font-semibold ${
                 resendCooldown > 0
                   ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                  : "bg-indigo-500 text-white hover:bg-indigo-600"
+                  : "bg-blue-500 text-white hover:bg-blue-600"
               }`}
             >
               {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : "Resend OTP"}
@@ -166,7 +166,7 @@ const SignUpForm = () => {
               <input
                 {...register("name", { required: "Name is required" })}
                 placeholder="Name"
-                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500"
               />
               {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
             </div>
@@ -179,7 +179,7 @@ const SignUpForm = () => {
                 })}
                 type="password"
                 placeholder="Password"
-                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500"
               />
               {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
             </div>
@@ -191,7 +191,7 @@ const SignUpForm = () => {
                 })}
                 type="password"
                 placeholder="Confirm Password"
-                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500"
               />
               {errors.confirmPassword && (
                 <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
@@ -200,7 +200,7 @@ const SignUpForm = () => {
 
             <button
               type="submit"
-              className="w-full px-4 py-2 font-semibold text-white bg-indigo-600 rounded-lg shadow hover:bg-indigo-700"
+              className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700"
             >
               Sign Up
             </button>
@@ -212,7 +212,7 @@ const SignUpForm = () => {
         {step !== 3 && (
           <p className="text-sm text-center text-gray-600">
             Already have an account?
-            <a href="/signin" className="text-indigo-600 hover:underline"> Sign in</a>
+            <a href="/signin" className="text-blue-600 hover:underline"> Sign in</a>
           </p>
         )}
       </div>

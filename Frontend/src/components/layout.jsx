@@ -44,7 +44,12 @@ const LayoutContent = ({ children }) => {
       <div className={`min-h-screen flex transition-colors ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
         {/* Sidebar */}
         <div className="fixed top-0 left-0 h-full w-64">
-          <Sidebar active={active} setActive={setActive} navigate={navigate} />
+          <Sidebar
+            active={active}
+            setActive={setActive}
+            navigate={navigate}
+            userRole={data.role}
+          />
         </div>
 
         {/* Main */}

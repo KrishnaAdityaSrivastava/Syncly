@@ -27,7 +27,7 @@ const Home = () => {
           {darkMode ? (
             <Sun className="text-yellow-400" />
           ) : (
-            <Moon className="text-indigo-600" />
+            <Moon className="text-blue-600" />
           )}
         </button>
 
@@ -38,7 +38,7 @@ const Home = () => {
           className="text-5xl md:text-6xl font-extrabold leading-tight"
         >
           Manage work smarter with{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">
             SYNCLY
           </span>
         </motion.h1>
@@ -64,7 +64,7 @@ const Home = () => {
         >
           <button
             onClick={() => navigate("/signin")}
-            className="px-8 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg hover:scale-105 hover:shadow-xl transition transform"
+            className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold shadow-lg hover:scale-105 hover:shadow-xl transition transform"
           >
             Sign In
           </button>
@@ -85,15 +85,15 @@ const Home = () => {
       <div
         className={`hidden md:flex flex-1 items-center justify-center relative overflow-hidden ${
           darkMode
-            ? "bg-gradient-to-br from-indigo-900 via-gray-900 to-black"
-            : "bg-gradient-to-br from-indigo-100 via-white to-purple-100"
+            ? "bg-gradient-to-br from-blue-900 via-gray-900 to-black"
+            : "bg-gradient-to-br from-blue-100 via-white to-purple-100"
         }`}
       >
         {/* Floating orbs */}
         <motion.div
           animate={{ y: [0, -30, 0] }}
           transition={{ duration: 6, repeat: Infinity }}
-          className="absolute w-80 h-80 bg-indigo-500 rounded-full opacity-30 blur-3xl"
+          className="absolute w-80 h-80 bg-blue-500 rounded-full opacity-30 blur-3xl"
         ></motion.div>
         <motion.div
           animate={{ y: [0, 40, 0] }}

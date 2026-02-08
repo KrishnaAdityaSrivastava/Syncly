@@ -1,10 +1,15 @@
+import mongoose from "mongoose";
 import ProjectMember from '../models/project-member.model.js'
 import Project from '../models/projects.model.js'
+import ProjectActivity from "../models/project-activity.model.js";
+import User from "../models/user.model.js";
 
 export const getUserProjects = async (req, res, next) => {
   try {
     const userId = req.user._id;
-    const projects = await ProjectMember.find({ userId }).populate("projectId", "name description");
+    const projects = await ProjectMember.find({ userId })
+      .populate("projectId", "name description")
+      .lean();
 
     if (projects.length == 0) {
       const error = new Error('No projects was found for this user');
@@ -27,36 +32,12 @@ export const getUserProject = async (req, res, next) => {
         const userId = req.user._id;
         const { projectId } = req.params;
 
-        const project = await ProjectMember.findOne({ userId, projectId }).populate(
-            "projectId",
-            "name description activity createdBy createdAt updatedAt"
-        );
-
-        if (!project) {
-            const error = new Error('Project was not found for this user');
-            error.statusCode = 404;
-            throw error;
-        }
-
-        res.status(200).json({
-            success: true,
-            data: project
-        })
-    }
-    catch (error) {
-        next(error);
-    }
-}
-
-export const getUserProject = async (req, res, next) => {
-    try {
-        const userId = req.user._id;
-        const { projectId } = req.params;
-
-        const project = await ProjectMember.findOne({ userId, projectId }).populate(
-            "projectId",
-            "name description activity createdBy createdAt updatedAt"
-        );
+        const project = await ProjectMember.findOne({ userId, projectId })
+            .populate(
+              "projectId",
+              "name description activity createdBy createdAt updatedAt"
+            )
+            .lean();
 
         if (!project) {
             const error = new Error('Project was not found for this user');
@@ -77,7 +58,9 @@ export const getUserProject = async (req, res, next) => {
 export const getProjectMembers = async (req, res, next) => {
   try {
     const projectId = req.params.projectId;
-    const members = await ProjectMember.find({ projectId }).populate("userId", "name email");
+    const members = await ProjectMember.find({ projectId })
+      .populate("userId", "name email")
+      .lean();
 
     if (!members) {
       const error = new Error('No user was found for this project');
@@ -133,25 +116,69 @@ export const getProjectActivity = async (req, res, next) => {
   try {
     const { projectId } = req.params;
 
-    const project = await Project.findById(projectId)
-      .select("activity")
-      .populate("activity.actor", "name email")
+    const activity = await ProjectActivity.find({ projectId })
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .populate("actor", "name email")
       .lean();
-
-    if (!project) {
-      return res.status(404).json({ error: "Project not found" });
-    }
-
-    const activity = Array.isArray(project.activity)
-      ? project.activity.slice().reverse()
-      : [];
 
     res.status(200).json({
       success: true,
-      data: activity
+      data: activity.map((item) => ({
+        type: item.type,
+        text: item.text,
+        actor: item.actor,
+        time: item.createdAt
+      }))
     });
   } catch (err) {
     next(err);
+  }
+};
+
+export const addProjectActivity = async ({ projectId, type, text, actor }) => {
+  if (!projectId || !type || !text) {
+    throw new Error("Missing required activity fields");
+  }
+
+  await ProjectActivity.create({
+    projectId,
+    type,
+    text,
+    actor: actor || null
+  });
+};
+
+export const updateProjectSettings = async (req, res, next) => {
+  try {
+    const { name, description } = req.body;
+    const updates = {};
+
+    if (typeof name === "string" && name.trim()) {
+      updates.name = name.trim();
+    }
+    if (typeof description === "string") {
+      updates.description = description.trim();
+    }
+
+    if (Object.keys(updates).length === 0) {
+      const error = new Error("No valid project fields provided");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const project = await Project.findByIdAndUpdate(
+      req.project._id,
+      updates,
+      { new: true }
+    ).select("name description updatedAt");
+
+    res.status(200).json({
+      success: true,
+      data: project
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -167,7 +194,7 @@ export const addMemberToProject = async (req, res, next) => {
     }
 
     // find project
-    const project = await Project.findById(projectId);
+    const project = req.project;
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     // ensure caller is admin (you may already have middleware; double-check)
@@ -224,7 +251,7 @@ export const removeMemberFromProject = async (req, res, next) => {
     const { userId } = req.body; // preferred
     const actorId = req.user._id;
 
-    const project = await Project.findById(projectId);
+    const project = req.project;
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     // actor is admin?
@@ -268,7 +295,7 @@ export const changeMemberRole = async (req, res, next) => {
     if (!userId || !role) return res.status(400).json({ error: "userId and role are required" });
     if (!["admin", "member", "viewer"].includes(role)) return res.status(400).json({ error: "Invalid role" });
 
-    const project = await Project.findById(projectId);
+    const project = req.project;
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     // actor is admin?

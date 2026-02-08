@@ -3,7 +3,7 @@ import { useNotification } from "../components/notificationContext.jsx";
 import Loading from "./loading.jsx";
 import { useState } from "react";
 
-const ProjectList = ({ projects }) => {
+const ProjectList = ({ projects, darkMode }) => {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const [loading, setLoading] = useState(false);
@@ -15,9 +15,13 @@ const ProjectList = ({ projects }) => {
 
   if (!projects.length)
     return (
-      <p className="text-gray-400 text-center py-10">
-        No projects found. Create one!
-      </p>
+      <div
+        className={`rounded-xl border p-6 text-center ${
+          darkMode ? "border-gray-700 bg-gray-800 text-gray-300" : "border-gray-200 bg-white text-gray-600"
+        }`}
+      >
+        <p className="text-sm">No projects found. Create one!</p>
+      </div>
     );
 
   const openProject = async (id) => {
@@ -36,25 +40,24 @@ const ProjectList = ({ projects }) => {
         <div
           key={p._id}
           onClick={() => openProject(p.projectId._id)}
-          className="
-            bg-gray-800 border border-gray-700 rounded-xl p-5
-            shadow-sm hover:shadow-lg hover:shadow-blue-500/10
-            hover:border-blue-500 transition cursor-pointer
-            group
-          "
+          className={`rounded-xl border p-5 shadow-sm transition cursor-pointer group ${
+            darkMode
+              ? "bg-gray-800 border-gray-700 hover:border-blue-400 hover:shadow-blue-500/10"
+              : "bg-white border-gray-200 hover:border-blue-500 hover:shadow-blue-500/10"
+          }`}
         >
-          <h2 className="text-lg font-semibold group-hover:text-blue-400 transition">
+          <h2 className="text-lg font-semibold transition group-hover:text-blue-500">
             {capitalize(p.projectId.name)}
           </h2>
 
           {p.projectId.description && (
-            <p className="text-gray-300 mt-2 line-clamp-2">
+            <p className={`mt-2 line-clamp-2 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
               {p.projectId.description}
             </p>
           )}
 
           <div className="mt-4 flex justify-end">
-            <span className="text-sm text-gray-500">
+            <span className={`text-sm ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
               {p.role === "admin" ? "Admin" : "Member"}
             </span>
           </div>

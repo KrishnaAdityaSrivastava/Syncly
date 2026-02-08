@@ -49,7 +49,7 @@ const SignInForm = () => {
               {...register("email", { required: "Email is required" })}
               type="email"
               placeholder="Email"
-              className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
             {errors.email && (
               <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
@@ -61,7 +61,7 @@ const SignInForm = () => {
               {...register("password", { required: "Password is required" })}
               type={showPass ? "text" : "password"}
               placeholder="Password"
-              className="w-full px-4 py-2 pr-10 text-gray-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              className="w-full px-4 py-2 pr-10 text-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
             <div
               onClick={() => setShowPass(!showPass)}
@@ -76,7 +76,7 @@ const SignInForm = () => {
 
           <button
             type="submit"
-            className="w-full px-4 py-2 font-semibold text-white bg-indigo-600 rounded-lg shadow hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400"
+            className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
           >
             Sign In
           </button>
@@ -84,7 +84,7 @@ const SignInForm = () => {
 
         <p className="text-sm text-center text-gray-600">
           Don't have an account?
-          <a href="/signup" className="text-indigo-600 hover:underline"> Sign up</a>
+          <a href="/signup" className="text-blue-600 hover:underline"> Sign up</a>
         </p>
       </div>
     </div>

@@ -69,7 +69,7 @@ export const removeTaskApi = async (data) => {
   const res = await api.post("/tasks/update", {
     action: 'pull',
     task: {
-      id: data.task._id
+      _id: data.task._id
     }
   });
 
@@ -160,19 +160,61 @@ export const getUserProjectApi = async (projectId) => {
   return res.data.data;
 };
 
-export const getUserProjectApi = async (projectId) => {
-  const res = await api.get(`/projects/${projectId}`);
-  return res.data.data;
-};
-
 export const getProjectMembersApi = async (projectId) => {
   const res = await api.get(`/projects/${projectId}/members`);
   return res.data.data; // returns array of members
 };
 
+export const getProjectTasksApi = async (projectId) => {
+  const res = await api.get(`/projects/${projectId}/tasks`);
+  return res.data.data;
+};
+
+export const createProjectTaskApi = async (projectId, data) => {
+  const res = await api.post(`/projects/${projectId}/tasks`, {
+    title: data.title,
+    description: data.description,
+    status: data.status,
+    priority: data.priority,
+    assigneeId: data.assigneeId,
+    dueDate: data.dueDate,
+    labels: data.labels
+  });
+  return res.data.data;
+};
+
+export const updateProjectTaskApi = async (projectId, taskId, data) => {
+  const res = await api.patch(`/projects/${projectId}/tasks/${taskId}`, {
+    title: data.title,
+    description: data.description,
+    status: data.status,
+    priority: data.priority,
+    assigneeId: data.assigneeId,
+    dueDate: data.dueDate,
+    labels: data.labels
+  });
+  return res.data.data;
+};
+
+export const addTaskCommentApi = async (projectId, taskId, text) => {
+  const res = await api.post(`/projects/${projectId}/tasks/${taskId}/comments`, {
+    text
+  });
+  return res.data.data;
+};
+
+export const updateProjectSettingsApi = async (projectId, data) => {
+  const res = await api.patch(`/projects/${projectId}/settings`, {
+    name: data.name,
+    description: data.description
+  });
+  return res.data.data;
+};
+
 export const addProjectMemberApi = async (projectId, data) => {
   const res = await api.post(`/projects/${projectId}/members`, {
     userId: data.userId,
+    email: data.email,
     role: data.role || "member"
   });
 
@@ -189,5 +231,110 @@ export const acceptProjectInviteApi = async (token) => {
   return res.data;
 };
 
+export const getUserSettingsApi = async () => {
+  const res = await api.get("/users/settings");
+  return res.data.data;
+};
+
+export const updateUserProfileApi = async (data) => {
+  const res = await api.patch("/users/settings/profile", {
+    name: data.name
+  });
+  return res.data.data;
+};
+
+export const updateUserPasswordApi = async (data) => {
+  const res = await api.patch("/users/settings/password", {
+    currentPassword: data.currentPassword,
+    newPassword: data.newPassword
+  });
+  return res.data;
+};
+
+export const updateUserNotificationsApi = async (data) => {
+  const res = await api.patch("/users/settings/notifications", {
+    email: data.email,
+    inApp: data.inApp
+  });
+  return res.data.data;
+};
+
+export const getAdminHealthApi = async () => {
+  const res = await api.get("/admin/health");
+  return res.data.data;
+};
+
+export const getAdminStatsApi = async () => {
+  const res = await api.get("/admin/stats");
+  return res.data.data;
+};
+
+export const getAdminUsersApi = async () => {
+  const res = await api.get("/admin/users");
+  return res.data.data;
+};
+
+export const updateAdminUserApi = async (userId, data) => {
+  const res = await api.patch(`/admin/users/${userId}`, {
+    role: data.role,
+    status: data.status
+  });
+  return res.data.data;
+};
+
+export const getAdminProjectsApi = async () => {
+  const res = await api.get("/admin/projects");
+  return res.data.data;
+};
+
+export const getAdminInvitesApi = async () => {
+  const res = await api.get("/admin/invites");
+  return res.data.data;
+};
+
+export const getChatContactsApi = async () => {
+  const res = await api.get("/chats/contacts");
+  return res.data.data;
+};
+
+export const getChatsApi = async () => {
+  const res = await api.get("/chats");
+  return res.data.data;
+};
+
+export const createChatApi = async (recipientId) => {
+  const res = await api.post("/chats", { recipientId });
+  return res.data.data;
+};
+
+export const getChatMessagesApi = async (chatId) => {
+  const res = await api.get(`/chats/${chatId}/messages`);
+  return res.data.data;
+};
+
+export const sendChatMessageApi = async (chatId, body) => {
+  const res = await api.post(`/chats/${chatId}/messages`, { body });
+  return res.data.data;
+};
+
+export const markChatReadApi = async (chatId) => {
+  const res = await api.patch(`/chats/${chatId}/read`);
+  return res.data;
+};
+
+export const getNotificationsApi = async () => {
+  const res = await api.get("/notifications");
+  return res.data.data;
+};
+
+export const markNotificationReadApi = async (notificationId) => {
+  const res = await api.patch(`/notifications/${notificationId}/read`);
+  return res.data.data;
+};
+
+export const markAllNotificationsReadApi = async () => {
+  const res = await api.patch("/notifications/read-all");
+  return res.data;
+};
 
 export default api;

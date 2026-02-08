@@ -9,6 +9,11 @@ import Home from './pages/home.jsx';
 import Projects from './pages/project.jsx'
 import ProjectDetail from './pages/projectDetail.jsx' // <- new page
 import ProjectInvite from "./pages/projectInvite.jsx";
+import Settings from "./pages/settings.jsx";
+import ProjectSettings from "./pages/projectSettings.jsx";
+import AdminDashboard from "./pages/adminDashboard.jsx";
+import Messages from "./pages/messages.jsx";
+import Notifications from "./pages/notifications.jsx";
 
 import { NotificationProvider } from "./components/notificationContext.jsx";
 import Layout from "./components/layout.jsx";
@@ -45,6 +50,47 @@ function App() {
           element={
             <Layout defaultActive="Projects">
               <ProjectDetail />
+            </Layout>
+          }
+        />
+        <Route
+          path="/projects/:projectId/settings"
+          element={
+            <Layout defaultActive="Projects">
+              <ProjectSettings />
+            </Layout>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <Layout defaultActive="Settings">
+              <Settings />
+            </Layout>
+          }
+        />
+        <Route
+          path="/messages"
+          element={
+            <Layout defaultActive="Messages">
+              <Messages />
+            </Layout>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <Layout defaultActive="Notifications">
+              <Notifications />
+            </Layout>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <Layout defaultActive="Admin">
+              <AdminDashboard />
             </Layout>
           }
         />

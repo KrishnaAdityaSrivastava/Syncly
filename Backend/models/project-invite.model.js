@@ -1,14 +1,14 @@
-// models/ProjectInvite.js
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
-const ProjectInviteSchema = new mongoose.Schema({
+const projectInviteSchema = new mongoose.Schema({
   projectId: { type: mongoose.Schema.Types.ObjectId, ref: "Project", required: true },
   invitedEmail: { type: String, required: true, lowercase: true },
   inviter: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  role: { type: String, enum: ["member", "admin"], default: "member" },
-  token: { type: String, required: true, unique: true }, // random token
+  role: { type: String, enum: ["member", "admin", "viewer"], default: "member" },
+  token: { type: String, required: true, unique: true },
   status: { type: String, enum: ["pending", "accepted", "rejected", "expired"], default: "pending" },
-  expiresAt: { type: Date }, // optional expiry
+  expiresAt: { type: Date }
 }, { timestamps: true });
 
-module.exports = mongoose.model("ProjectInvite", ProjectInviteSchema);
+const ProjectInvite = mongoose.model("ProjectInvite", projectInviteSchema);
+export default ProjectInvite;

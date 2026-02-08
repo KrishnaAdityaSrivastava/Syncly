@@ -95,6 +95,16 @@ export const signIn = async (req, res, next) => {
       throw error;
     }
 
+    if (user.status === "disabled") {
+      const error = new Error("Account is disabled");
+      error.errorType = "ACCOUNT_DISABLED";
+      error.statusCode = 403;
+      throw error;
+    }
+
+    user.lastActive = new Date();
+    await user.save();
+
 
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
       expiresIn: JWT_EXPIRE,
@@ -112,6 +122,9 @@ export const signIn = async (req, res, next) => {
       id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
+      status: user.status,
+      lastActive: user.lastActive,
       totalProject: user.totalProject,
       taskProgress: user.taskProgress,
       taskCompleted: user.taskCompleted,

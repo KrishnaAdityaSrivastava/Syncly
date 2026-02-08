@@ -14,6 +14,9 @@ import emailVerifyRouter from './routes/email-verification.route.js';
 import taskRouter from './routes/task.route.js';
 import projectRouter from './routes/project.route.js';
 import inviteRouter from './routes/project-invite.route.js';
+import adminRouter from './routes/admin.route.js';
+import chatRouter from './routes/chat.route.js';
+import notificationRouter from './routes/notification.route.js';
 
 import requestTimer from './middlewares/requestTimer.middleware.js';
 import errorMiddleware from './middlewares/error.middleware.js';
@@ -44,6 +47,9 @@ app.use('/users', userRouter);
 app.use('/tasks', taskRouter);
 app.use('/projects', projectRouter);
 app.use("/invites", inviteRouter);
+app.use("/admin", adminRouter);
+app.use("/chats", chatRouter);
+app.use("/notifications", notificationRouter);
 
 // ERROR HANDLER
 app.use(errorMiddleware);

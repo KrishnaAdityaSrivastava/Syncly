@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
 import { sendProjectInviteEmail } from "../utils/send-emails.js";
+import ProjectInvite from "../models/project-invite.model.js";
 import ProjectMember from "../models/project-member.model.js";
 import User from "../models/user.model.js";
-import mongoose from "mongoose";
 import {addProjectActivity} from './project.controller.js';
 
 export const sendProjectInvite = async (req, res) => {
@@ -21,6 +21,16 @@ export const sendProjectInvite = async (req, res) => {
       process.env.INVITE_SECRET,
       { expiresIn: "72h" }
     );
+
+    await ProjectInvite.create({
+      projectId: project._id,
+      invitedEmail: email,
+      inviter: req.user._id,
+      role,
+      token,
+      status: "pending",
+      expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000)
+    });
 
     // Send email
     await sendProjectInviteEmail({
@@ -79,6 +89,12 @@ export const acceptProjectInvite = async (req, res) => {
       projectId,
       role,
     });
+
+    await ProjectInvite.findOneAndUpdate(
+      { token },
+      { status: "accepted" },
+      { new: true }
+    );
 
     await addProjectActivity({
       projectId,
