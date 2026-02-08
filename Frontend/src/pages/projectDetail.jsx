@@ -35,14 +35,14 @@ const ProjectDetail = ({ darkMode }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const thisProject = await getUserProjectApi(projectId);
+        const [thisProject, memList, activityList] = await Promise.all([
+          getUserProjectApi(projectId),
+          getProjectMembersApi(projectId),
+          getProjectActivityApi(projectId),
+        ]);
+
         setProject(thisProject);
-
-        const memList = await getProjectMembersApi(projectId);
         setMembers(memList);
-
-        // Temp activity log
-        const activityList = await getProjectActivityApi(projectId);
         setActivities(activityList);
       } catch (error) {
         showNotification(
