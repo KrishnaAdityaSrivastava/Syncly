@@ -130,7 +130,7 @@ export const upgradeTaskApi = async (data) => {
 
 export const dashBoardApi = async () => {
   //await updateTaskApi();
-  const res = await api.get("/users/data");
+  const res = await api.get("/users/context");
   // console.log(res.data.data);
 
   return res.data.data
@@ -148,6 +148,11 @@ export const createProjectApi = async (data) => {
 export const getUserProjectsApi = async () => {
   const res = await api.get("/projects/");
   // console.log(res.data.data);
+  return res.data.data;
+};
+
+export const getUserProjectApi = async (projectId) => {
+  const res = await api.get(`/projects/${projectId}`);
   return res.data.data;
 };
 

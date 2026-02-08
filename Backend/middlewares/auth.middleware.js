@@ -12,24 +12,31 @@ const authorize = async (req, res, next) => {
     }
 
     if (!token) {
-      return res.status(401).json({ message: "Unauthorized: no token" });
+      const error = new Error("Unauthorized: no token");
+      error.statusCode = 401;
+      error.errorType = "UNAUTHORIZED";
+      throw error;
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(decoded.userId).select(
+      "name email role totalProject taskProgress taskCompleted teamMember"
+    );
     if (!user) {
-      return res.status(401).json({ message: "Unauthorized: user not found" });
+      const error = new Error("Unauthorized: user not found");
+      error.statusCode = 401;
+      error.errorType = "UNAUTHORIZED";
+      throw error;
     }
 
     req.user = user;
 
     next();
   } catch (error) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      error: error.message,
-    });
+    error.statusCode = error.statusCode || 401;
+    error.errorType = error.errorType || "UNAUTHORIZED";
+    return next(error);
   }
 };
 
