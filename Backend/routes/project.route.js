@@ -10,6 +10,8 @@ projectRouter.post("/", authorize, createProject);
 projectRouter.get("/", authorize, getUserProjects);
 projectRouter.get("/:projectId", authorize, getUserProject);
 
+projectRouter.get("/:projectId/activity", authorize, loadProject, requireProjectMember,getProjectActivity);
+
 projectRouter.get("/:projectId/members", authorize, loadProject, requireProjectMember, getProjectMembers);
 projectRouter.post("/:projectId/members", authorize, loadProject, requireProjectAdmin, addMemberToProject);
 projectRouter.delete("/:projectId/members", authorize, loadProject, requireProjectAdmin, removeMemberFromProject);

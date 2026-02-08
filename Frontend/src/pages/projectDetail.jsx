@@ -4,10 +4,11 @@ import {
   getProjectMembersApi,
   getUserProjectApi,
   sendProjectInviteApi,
+  getProjectActivityApi
 } from "../api/api.js";
 
 import { MessageSquare, Users, ClipboardList } from "lucide-react";
-import Loading from "../components/loading.jsx"; 
+import Loading from "../components/loading.jsx";
 import { useNotification } from "../components/notificationContext.jsx";
 
 
@@ -41,11 +42,8 @@ const ProjectDetail = ({ darkMode }) => {
         setMembers(memList);
 
         // Temp activity log
-        setActivities([
-          { text: "Project created", time: "2 days ago" },
-          { text: "3 tasks added", time: "1 day ago" },
-          { text: "Invitation sent to John", time: "6 hrs ago" },
-        ]);
+        const activityList = await getProjectActivityApi(projectId);
+        setActivities(activityList);
       } catch (error) {
         showNotification(
           error?.response?.data?.message || "Failed to load project.",
@@ -87,11 +85,18 @@ const ProjectDetail = ({ darkMode }) => {
     }
   };
 
+  const timeAgo = (date) => {
+    const diff = Math.floor((Date.now() - new Date(date)) / 1000);
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hrs ago`;
+    return `${Math.floor(diff / 86400)} days ago`;
+  };
+
   return (
     <div
-      className={`p-6 min-h-screen transition ${
-        isDark ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
-      }`}
+      className={`p-6 min-h-screen transition ${isDark ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
+        }`}
     >
       {/* HEADER */}
       <div className="mb-8">
@@ -144,8 +149,10 @@ const ProjectDetail = ({ darkMode }) => {
                     key={idx}
                     className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-gray-100"}`}
                   >
-                    <p className="font-medium">{a.text}</p>
-                    <p className="text-xs opacity-60">{a.time}</p>
+                    <p className="font-medium">
+                      {a.actor?.name ? `${capitalize(a.actor.name)}: ` : ""}{a.text}
+                    </p>
+                    <p className="text-xs opacity-60">{timeAgo(a.time)}</p>
                   </div>
                 ))}
               </div>

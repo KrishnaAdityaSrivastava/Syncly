@@ -2,24 +2,24 @@ import ProjectMember from '../models/project-member.model.js'
 import Project from '../models/projects.model.js'
 
 export const getUserProjects = async (req, res, next) => {
-    try {
-        const userId = req.user._id;
-        const projects = await ProjectMember.find({ userId }).populate("projectId", "name description");
+  try {
+    const userId = req.user._id;
+    const projects = await ProjectMember.find({ userId }).populate("projectId", "name description");
 
-        if (projects.length == 0) {
-            const error = new Error('No projects was found for this user');
-            error.statusCode = 404;
-            throw error;
-        }
+    if (projects.length == 0) {
+      const error = new Error('No projects was found for this user');
+      error.statusCode = 404;
+      throw error;
+    }
 
-        res.status(200).json({
-            success: true,
-            data: projects
-        })
-    }
-    catch (error) {
-        next(error);
-    }
+    res.status(200).json({
+      success: true,
+      data: projects
+    })
+  }
+  catch (error) {
+    next(error);
+  }
 }
 
 export const getUserProject = async (req, res, next) => {
@@ -49,24 +49,24 @@ export const getUserProject = async (req, res, next) => {
 }
 
 export const getProjectMembers = async (req, res, next) => {
-    try {
-        const projectId = req.params.projectId;
-        const members = await ProjectMember.find({ projectId }).populate("userId", "name email");
+  try {
+    const projectId = req.params.projectId;
+    const members = await ProjectMember.find({ projectId }).populate("userId", "name email");
 
-        if (!members) {
-            const error = new Error('No user was found for this project');
-            error.statusCode = 404;
-            throw error;
-        }
+    if (!members) {
+      const error = new Error('No user was found for this project');
+      error.statusCode = 404;
+      throw error;
+    }
 
-        res.status(200).json({
-            success: true,
-            data: members
-        })
-    }
-    catch (error) {
-        next(error);
-    }
+    res.status(200).json({
+      success: true,
+      data: members
+    })
+  }
+  catch (error) {
+    next(error);
+  }
 }
 
 export const createProject = async (req, res, next) => {
@@ -102,6 +102,33 @@ export const createProject = async (req, res, next) => {
         next(err);
     }
 };
+
+export const getProjectActivity = async (req, res, next) => {
+  try {
+    const { projectId } = req.params;
+
+    const project = await Project.findById(projectId)
+      .select("activity")
+      .populate("activity.actor", "name email")
+      .lean();
+
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    const activity = Array.isArray(project.activity)
+      ? project.activity.slice().reverse()
+      : [];
+
+    res.status(200).json({
+      success: true,
+      data: activity
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 export const addMemberToProject = async (req, res, next) => {
   try {
@@ -145,6 +172,7 @@ export const addMemberToProject = async (req, res, next) => {
         userId: targetUser._id,
         role,
       });
+
 
       const populated = await ProjectMember.findById(member._id).populate("userId", "name email");
       return res.status(201).json({ success: true, member: populated });

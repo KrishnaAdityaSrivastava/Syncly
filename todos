@@ -2,13 +2,21 @@ backend
     forgot password functionality
     clean console logs
     better error messages
-    CRUD tasks
+    show user stats
+    (Admin only)
+        - add server stats 
+        - manage users
+        - manage invites
+    
 
 frontend
     remove console logs
-    show error on signin/signup  if any from api
+    show error on signin/signup if any from api
     show otp sent popup or smh
     if error in auth send user to sign in page
     make invitation page
+    being able to add project details
     add settings option
+    show server stats
+
     
