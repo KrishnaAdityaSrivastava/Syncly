@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   getProjectMembersApi,
-  getUserProjectsApi,
+  getUserProjectApi,
   sendProjectInviteApi,
 } from "../api/api.js";
 
@@ -34,8 +34,7 @@ const ProjectDetail = ({ darkMode }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const allProjects = await getUserProjectsApi();
-        const thisProject = allProjects.find((p) => p.projectId?._id === projectId);
+        const thisProject = await getUserProjectApi(projectId);
         setProject(thisProject);
 
         const memList = await getProjectMembersApi(projectId);

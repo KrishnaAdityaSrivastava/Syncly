@@ -1,13 +1,14 @@
 import { Router } from "express";
 
 import authorize from '../middlewares/auth.middleware.js'
-import { addMemberToProject, removeMemberFromProject, changeMemberRole, createProject,getUserProjects, getProjectMembers } from "../controllers/project.controller.js";
+import { addMemberToProject, removeMemberFromProject, changeMemberRole, createProject, getUserProject, getUserProjects, getProjectMembers } from "../controllers/project.controller.js";
 import { loadProject, requireProjectAdmin, requireProjectMember } from "../middlewares/projectAccess.middleware.js";
 
 const projectRouter = Router();
 
 projectRouter.post("/", authorize, createProject);
 projectRouter.get("/", authorize, getUserProjects);
+projectRouter.get("/:projectId", authorize, getUserProject);
 
 projectRouter.get("/:projectId/members", authorize, loadProject, requireProjectMember, getProjectMembers);
 projectRouter.post("/:projectId/members", authorize, loadProject, requireProjectAdmin, addMemberToProject);
