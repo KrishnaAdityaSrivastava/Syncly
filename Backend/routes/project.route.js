@@ -1,17 +1,9 @@
 import { Router } from "express";
 
 import authorize from '../middlewares/auth.middleware.js'
-import {
-  addMemberToProject,
-  removeMemberFromProject,
-  changeMemberRole,
-  createProject,
-  getUserProject,
-  getUserProjects,
-  getProjectMembers,
-  updateProjectSettings,
-  getProjectActivity
-} from "../controllers/project.controller.js";
+
+import { addMemberToProject, removeMemberFromProject, changeMemberRole, createProject, getUserProject, getUserProjects, getProjectMembers, getProjectActivity, updateProjectSettings } from "../controllers/project.controller.js";
+
 import { loadProject, requireProjectAdmin, requireProjectMember } from "../middlewares/projectAccess.middleware.js";
 import {
   createProjectTask,
@@ -26,6 +18,7 @@ projectRouter.post("/", authorize, createProject);
 projectRouter.get("/", authorize, getUserProjects);
 projectRouter.get("/:projectId", authorize, getUserProject);
 
+projectRouter.get("/:projectId/activity", authorize, loadProject, requireProjectMember,getProjectActivity);
 projectRouter.get("/:projectId/members", authorize, loadProject, requireProjectMember, getProjectMembers);
 projectRouter.post("/:projectId/members", authorize, loadProject, requireProjectAdmin, addMemberToProject);
 projectRouter.delete("/:projectId/members", authorize, loadProject, requireProjectAdmin, removeMemberFromProject);

@@ -32,12 +32,10 @@ export const getUserProject = async (req, res, next) => {
         const userId = req.user._id;
         const { projectId } = req.params;
 
-        const project = await ProjectMember.findOne({ userId, projectId })
-            .populate(
-              "projectId",
-              "name description activity createdBy createdAt updatedAt"
-            )
-            .lean();
+        const project = await ProjectMember.findOne({ userId, projectId }).populate(
+            "projectId",
+            "name description activity createdBy createdAt updatedAt"
+        );
 
         if (!project) {
             const error = new Error('Project was not found for this user');
