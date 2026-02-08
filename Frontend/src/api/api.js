@@ -322,4 +322,19 @@ export const markChatReadApi = async (chatId) => {
   return res.data;
 };
 
+export const getNotificationsApi = async () => {
+  const res = await api.get("/notifications");
+  return res.data.data;
+};
+
+export const markNotificationReadApi = async (notificationId) => {
+  const res = await api.patch(`/notifications/${notificationId}/read`);
+  return res.data.data;
+};
+
+export const markAllNotificationsReadApi = async () => {
+  const res = await api.patch("/notifications/read-all");
+  return res.data;
+};
+
 export default api;

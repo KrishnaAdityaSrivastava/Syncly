@@ -1,6 +1,7 @@
 import Chat from "../models/chat.model.js";
 import Message from "../models/message.model.js";
 import User from "../models/user.model.js";
+import { createNotification } from "../utils/notification.utils.js";
 
 const buildParticipantKey = (userId, recipientId) => {
   const ids = [userId.toString(), recipientId.toString()].sort();
@@ -215,6 +216,14 @@ export const sendChatMessage = async (req, res, next) => {
       senderId: userId,
       recipientId: recipient._id,
       body: body.trim()
+    });
+
+    await createNotification({
+      userId: recipient._id,
+      type: "DIRECT_MESSAGE",
+      message: `New message from ${req.user.name || "a teammate"}`,
+      entity: message._id,
+      createdBy: userId
     });
 
     chat.lastMessage = {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, FolderKanban, BarChart3, Settings, LogOut, Menu, MessageSquare } from "lucide-react";
+import { LayoutDashboard, FolderKanban, BarChart3, Settings, LogOut, Menu, MessageSquare, Bell } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { signOutApi } from "../api/api";
 import { useTheme } from "./themeContext.jsx";
@@ -15,6 +15,7 @@ const Sidebar = ({ setLoading, navigate, userRole }) => {
     { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
     { label: "Projects", icon: FolderKanban, path: "/projects" },
     { label: "Messages", icon: MessageSquare, path: "/messages" },
+    { label: "Notifications", icon: Bell, path: "/notifications" },
     { label: "Reports", icon: BarChart3, path: "/reports" },
     { label: "Settings", icon: Settings, path: "/settings" },
   ];

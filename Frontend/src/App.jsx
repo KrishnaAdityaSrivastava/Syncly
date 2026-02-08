@@ -13,6 +13,7 @@ import Settings from "./pages/settings.jsx";
 import ProjectSettings from "./pages/projectSettings.jsx";
 import AdminDashboard from "./pages/adminDashboard.jsx";
 import Messages from "./pages/messages.jsx";
+import Notifications from "./pages/notifications.jsx";
 
 import { NotificationProvider } from "./components/notificationContext.jsx";
 import Layout from "./components/layout.jsx";
@@ -74,6 +75,14 @@ function App() {
           element={
             <Layout defaultActive="Messages">
               <Messages />
+            </Layout>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <Layout defaultActive="Notifications">
+              <Notifications />
             </Layout>
           }
         />
