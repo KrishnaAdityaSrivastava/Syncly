@@ -3,6 +3,7 @@ import { sendProjectInviteEmail } from "../utils/send-emails.js";
 import ProjectMember from "../models/project-member.model.js";
 import User from "../models/user.model.js";
 import mongoose from "mongoose";
+import {addProjectActivity} from './project.controller.js';
 
 export const sendProjectInvite = async (req, res) => {
   try {
@@ -10,6 +11,9 @@ export const sendProjectInvite = async (req, res) => {
     const { project } = req;
 
     if (!email) return res.status(400).json({ message: "Email is required" });
+    if (!["admin", "member", "viewer"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
 
     // Create invite token
     const token = jwt.sign(
@@ -26,6 +30,13 @@ export const sendProjectInvite = async (req, res) => {
       inviteLink: `${process.env.CLIENT_URL}/invites?token=${token}`,
     });
 
+    await addProjectActivity({
+      projectId: project._id,
+      type: "INVITE_SENT",
+      text: `Invitation sent to ${email}`,
+      actor: req.user._id
+    });
+
     return res.json({ message: "Invitation sent" });
   } catch (err) {
     console.error("Invite error:", err);
@@ -33,33 +44,52 @@ export const sendProjectInvite = async (req, res) => {
   }
 };
 
-// Accept invite route (fixed)
+// Accept invite route (fixed, safe)
 export const acceptProjectInvite = async (req, res) => {
   try {
     const { token } = req.body;
-    if (!token) return res.status(400).json({ message: "Token required" });
+    if (!token) {
+      return res.status(400).json({ message: "Token required" });
+    }
 
-    // Decode token
     const decoded = jwt.verify(token, process.env.INVITE_SECRET);
     const { email, projectId, role } = decoded;
 
-    // Find user
     const user = await User.findOne({ email });
-    if (!user)
+    if (!user) {
       return res.status(404).json({
         message: "User not found. Ask them to sign up first.",
       });
+    }
 
-    // Add user safely using upsert
-    const newMember = await ProjectMember.findOneAndUpdate(
-      { userId: mongoose.Types.ObjectId(user._id), projectId: mongoose.Types.ObjectId(projectId) },
-      { $setOnInsert: { role } },
-      { upsert: true, new: true }
-    );
+    const existingMember = await ProjectMember.findOne({
+      userId: user._id,
+      projectId,
+    });
+
+    if (existingMember) {
+      return res.json({
+        message: "You are already a member of this project",
+        member: existingMember,
+      });
+    }
+
+    const member = await ProjectMember.create({
+      userId: user._id,
+      projectId,
+      role,
+    });
+
+    await addProjectActivity({
+      projectId,
+      type: "MEMBER_ADDED",
+      text: `${user.name} was added as ${role}`,
+      actor: user._id,
+    });
 
     return res.json({
       message: "Invitation accepted",
-      member: newMember,
+      member,
     });
   } catch (err) {
     console.error("Accept invite error:", err);

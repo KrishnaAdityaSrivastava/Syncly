@@ -15,6 +15,7 @@ import taskRouter from './routes/task.route.js';
 import projectRouter from './routes/project.route.js';
 import inviteRouter from './routes/project-invite.route.js';
 
+import requestTimer from './middlewares/requestTimer.middleware.js';
 import errorMiddleware from './middlewares/error.middleware.js';
 import arcjetMiddleware from './middlewares/arcject.middleware.js';
 
@@ -22,14 +23,19 @@ const app = express();
 
 // EXPRESS CORS
 app.use(cors({
-  origin: "http://localhost:5173",
-  credentials: true,
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5500"
+  ],
+  credentials: true
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(arcjetMiddleware);
+
+app.use(requestTimer);
+//app.use(arcjetMiddleware);
 
 // ROUTES
 app.use('/email', emailVerifyRouter);

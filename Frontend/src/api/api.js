@@ -144,8 +144,19 @@ export const createProjectApi = async (data) => {
   return res.data; // contains { message, project }
 };
 
+export const getProjectActivityApi = async (projectId) => {
+  const res = await api.get(`/projects/${projectId}/activity`);
+  return res.data.data;
+};
+
+
 export const getUserProjectsApi = async () => {
   const res = await api.get("/projects/");
+  return res.data.data;
+};
+
+export const getUserProjectApi = async (projectId) => {
+  const res = await api.get(`/projects/${projectId}`);
   return res.data.data;
 };
 

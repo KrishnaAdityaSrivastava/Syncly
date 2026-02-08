@@ -12,10 +12,21 @@ const projectSchema = new mongoose.Schema({
         type: String,
     },
     activity: [{
-        _id:false,
-        text: String,
-        time:{
-            type:Date,
+        _id: false,
+        type: {
+            type: String, // e.g. "PROJECT_CREATED", "MEMBER_ADDED"
+            required: true
+        },
+        text: {
+            type: String,
+            required: true
+        },
+        actor: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        },
+        time: {
+            type: Date,
             default: Date.now
         }
     }],

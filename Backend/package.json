@@ -7,6 +7,9 @@
     "start": "node app.js",
     "dev": "nodemon app.js"
   },
+  "nodemonConfig": {
+    "ignore": ["logs/*"]
+  },
   "dependencies": {
     "@arcjet/inspect": "^1.0.0-beta.10",
     "@arcjet/node": "^1.0.0-beta.10",
