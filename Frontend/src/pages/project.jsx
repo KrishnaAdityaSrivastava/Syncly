@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { getUserProjectsApi, createProjectApi } from "../api/api.js";
 import ProjectList from "../components/projectList.jsx";
 import Loading from "../components/loading.jsx";
+import { useNotification } from "../components/notificationContext.jsx";
 
 const Projects = ({ darkMode }) => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { showNotification } = useNotification();
 
   // Modal states
   const [showModal, setShowModal] = useState(false);
@@ -20,6 +22,10 @@ const Projects = ({ darkMode }) => {
       setProjects(data);
     } catch (err) {
       console.error("Failed fetching projects:", err);
+      showNotification(
+        err?.response?.data?.message || "Failed to load projects",
+        "error"
+      );
     } finally {
       const elapsed = Date.now() - start;
       const delay = Math.max(0, 800 - elapsed);
@@ -29,7 +35,10 @@ const Projects = ({ darkMode }) => {
 
   // Create new project
   const handleCreate = async () => {
-    if (!projectName.trim()) return;
+    if (!projectName.trim()) {
+      showNotification("Project name is required", "error");
+      return;
+    }
 
     try {
       const res = await createProjectApi({ name: projectName, description });
@@ -47,8 +56,13 @@ const Projects = ({ darkMode }) => {
       setShowModal(false);
       setProjectName("");
       setDescription("");
+      showNotification("Project created", "success");
     } catch (err) {
       console.error("Failed to create project:", err);
+      showNotification(
+        err?.response?.data?.message || "Failed to create project",
+        "error"
+      );
     }
   };
 
