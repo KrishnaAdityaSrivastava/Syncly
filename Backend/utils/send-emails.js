@@ -15,8 +15,7 @@ export const sendVerificationEmail = async({ to, otpCode })=> {
     }
 
     await transporter.sendMail(mailOptions,(error, info) => {
-        if (error) return console.log(error, "Error Sending Email");
-        console.log("Email sent : " + info.response);
+        if (error) return console.error(error, "Error Sending Email");
     })
 }
 
@@ -38,7 +37,6 @@ export const sendProjectInviteEmail = async ({ to, projectName, inviteLink }) =>
     };
 
     await transporter.sendMail(mailOptions, (error, info) => {
-        if (error) return console.log("Error Sending Invitation:", error);
-        console.log("Invitation Email Sent:", info.response);
+        if (error) return console.error("Error Sending Invitation:", error);
     });
 };

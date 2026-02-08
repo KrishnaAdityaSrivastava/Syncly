@@ -51,36 +51,36 @@ app.use(errorMiddleware);
 // CREATE HTTP SERVER (NEEDED FOR SOCKET.IO)
 const httpServer = createServer(app);
 
-// // SOCKET.IO SETUP
-// const io = new Server(httpServer, {
-//   cors: {
-//     origin: "http://localhost:5173",
-//     methods: ["GET", "POST"],
-//     credentials: true
-//   }
-// });
+// SOCKET.IO SETUP
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
 
-// // SOCKET EVENTS
-// io.on("connection", (socket) => {
-//   console.log("User connected:", socket.id);
+// SOCKET EVENTS
+io.on("connection", (socket) => {
+  console.info("User connected:", socket.id);
 
-//   socket.on("joinProject", (projectId) => {
-//     socket.join(projectId);
-//     console.log(`User ${socket.id} joined project ${projectId}`);
-//   });
+  socket.on("joinProject", (projectId) => {
+    socket.join(projectId);
+    console.info(`User ${socket.id} joined project ${projectId}`);
+  });
 
-//   socket.on("sendMessage", ({ projectId, message }) => {
-//     socket.to(projectId).emit("receiveMessage", message);
-//   });
+  socket.on("sendMessage", ({ projectId, message }) => {
+    socket.to(projectId).emit("receiveMessage", message);
+  });
 
-//   socket.on("disconnect", () => {
-//     console.log("User disconnected");
-//   });
-// });
+  socket.on("disconnect", () => {
+    console.info("User disconnected");
+  });
+});
 
 // START SERVER
 httpServer.listen(PORT, async () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.info(`Server running at http://localhost:${PORT}`);
   await ConnectToDatabase();
 });
 
