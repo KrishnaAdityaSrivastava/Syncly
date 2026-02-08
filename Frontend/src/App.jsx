@@ -11,6 +11,7 @@ import ProjectDetail from './pages/projectDetail.jsx' // <- new page
 import ProjectInvite from "./pages/projectInvite.jsx";
 import Settings from "./pages/settings.jsx";
 import ProjectSettings from "./pages/projectSettings.jsx";
+import AdminDashboard from "./pages/adminDashboard.jsx";
 
 import { NotificationProvider } from "./components/notificationContext.jsx";
 import Layout from "./components/layout.jsx";
@@ -64,6 +65,14 @@ function App() {
           element={
             <Layout defaultActive="Settings">
               <Settings />
+            </Layout>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <Layout defaultActive="Admin">
+              <AdminDashboard />
             </Layout>
           }
         />

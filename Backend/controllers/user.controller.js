@@ -3,7 +3,7 @@ import User from "../models/user.model.js";
 
 export const getUsers = async (req, res, next) => {
     try {
-        const users = await User.find();
+        const users = await User.find().select("name email role status lastActive createdAt");
 
         res.status(200).json({
             success: true,
@@ -38,7 +38,7 @@ export const getUser = async (req, res, next) => {
 export const getUserContext = async (req, res, next) => {
     try {
         const user = await User.findById(req.user._id).select(
-            "name email totalProject taskProgress taskCompleted teamMember"
+            "name email role status lastActive totalProject taskProgress taskCompleted teamMember"
         );
 
         if (!user) {
@@ -53,6 +53,9 @@ export const getUserContext = async (req, res, next) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
+                role: user.role,
+                status: user.status,
+                lastActive: user.lastActive,
                 totalProject: user.totalProject,
                 taskProgress: user.taskProgress,
                 taskCompleted: user.taskCompleted,

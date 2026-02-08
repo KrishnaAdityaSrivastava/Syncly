@@ -221,5 +221,38 @@ export const updateUserNotificationsApi = async (data) => {
   return res.data.data;
 };
 
+export const getAdminHealthApi = async () => {
+  const res = await api.get("/admin/health");
+  return res.data.data;
+};
+
+export const getAdminStatsApi = async () => {
+  const res = await api.get("/admin/stats");
+  return res.data.data;
+};
+
+export const getAdminUsersApi = async () => {
+  const res = await api.get("/admin/users");
+  return res.data.data;
+};
+
+export const updateAdminUserApi = async (userId, data) => {
+  const res = await api.patch(`/admin/users/${userId}`, {
+    role: data.role,
+    status: data.status
+  });
+  return res.data.data;
+};
+
+export const getAdminProjectsApi = async () => {
+  const res = await api.get("/admin/projects");
+  return res.data.data;
+};
+
+export const getAdminInvitesApi = async () => {
+  const res = await api.get("/admin/invites");
+  return res.data.data;
+};
+
 
 export default api;

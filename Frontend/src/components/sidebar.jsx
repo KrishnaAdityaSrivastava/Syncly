@@ -5,7 +5,7 @@ import { signOutApi } from "../api/api";
 import { useTheme } from "./themeContext.jsx";
 import { useNotification } from "./notificationContext.jsx";
 
-const Sidebar = ({ setLoading, navigate }) => {
+const Sidebar = ({ setLoading, navigate, userRole }) => {
   const { darkMode } = useTheme();
   const { showNotification } = useNotification();
   const location = useLocation();
@@ -16,6 +16,9 @@ const Sidebar = ({ setLoading, navigate }) => {
     { label: "Projects", icon: FolderKanban, path: "/projects" },
     { label: "Reports", icon: BarChart3, path: "/reports" },
     { label: "Settings", icon: Settings, path: "/settings" },
+  ];
+  const adminItems = [
+    { label: "Admin", icon: Settings, path: "/admin" }
   ];
 
   return (
@@ -67,6 +70,33 @@ const Sidebar = ({ setLoading, navigate }) => {
             </button>
           );
         })}
+
+        {userRole === "admin" && (
+          <div className="pt-4">
+            <p className="px-4 text-xs uppercase tracking-wide text-gray-500">Admin</p>
+            {adminItems.map(({ label, icon: Icon, path }) => {
+              const isActive = location.pathname === path;
+              return (
+                <button
+                  key={label}
+                  onClick={() => navigate(path)}
+                  className={`group relative mt-2 flex items-center w-full px-4 py-2 rounded-lg transition-colors font-medium overflow-hidden ${
+                    isActive
+                      ? darkMode
+                        ? "bg-blue-600 text-white"
+                        : "bg-blue-500 text-white"
+                      : darkMode
+                        ? "text-gray-400 hover:bg-gray-800 hover:text-blue-400"
+                        : "text-gray-700 hover:bg-blue-100 hover:text-blue-700"
+                  }`}
+                >
+                  <Icon size={20} className="mr-3 flex-shrink-0" />
+                  <span className={`${collapsed ? "hidden" : "block"} transition-all duration-300`}>{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </nav>
 
       {/* Logout Button */}

@@ -23,6 +23,20 @@ const userSchema = new mongoose.Schema({
         required: [true, "User Password is required."],
         minLength: 6,
     },
+    role: {
+        type: String,
+        enum: ["admin", "member"],
+        default: "member"
+    },
+    status: {
+        type: String,
+        enum: ["active", "disabled"],
+        default: "active"
+    },
+    lastActive: {
+        type: Date,
+        default: null
+    },
     totalProject: {
         type: Number,
         default: 0

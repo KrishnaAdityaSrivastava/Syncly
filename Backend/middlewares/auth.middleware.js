@@ -21,12 +21,19 @@ const authorize = async (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
 
     const user = await User.findById(decoded.userId).select(
-      "name email role totalProject taskProgress taskCompleted teamMember"
+      "name email role status lastActive totalProject taskProgress taskCompleted teamMember"
     );
     if (!user) {
       const error = new Error("Unauthorized: user not found");
       error.statusCode = 401;
       error.errorType = "UNAUTHORIZED";
+      throw error;
+    }
+
+    if (user.status === "disabled") {
+      const error = new Error("Account is disabled");
+      error.statusCode = 403;
+      error.errorType = "ACCOUNT_DISABLED";
       throw error;
     }
 
