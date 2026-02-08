@@ -115,8 +115,18 @@ const ProjectDetail = () => {
         }`}
     >
       {/* HEADER */}
-      <div className="mb-8">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">{capitalize(proj?.name)}</h1>
+        <a
+          href={`/projects/${projectId}/settings`}
+          className={`rounded-lg border px-4 py-2 text-sm transition ${
+            isDark
+              ? "border-blue-500/40 text-blue-200 hover:bg-blue-500/10"
+              : "border-blue-200 text-blue-600 hover:bg-blue-50"
+          }`}
+        >
+          Project Settings
+        </a>
       </div>
 
       {/* PROJECT STATS */}

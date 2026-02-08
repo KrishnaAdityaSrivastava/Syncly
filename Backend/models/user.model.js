@@ -39,6 +39,12 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    settings: {
+        notifications: {
+            email: { type: Boolean, default: true },
+            inApp: { type: Boolean, default: true }
+        }
+    },
     task: { type: [taskSchema], default: [] }
     
 }, { timestamps: true });

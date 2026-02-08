@@ -157,6 +157,39 @@ export const addProjectActivity = async ({ projectId, type, text, actor }) => {
   );
 };
 
+export const updateProjectSettings = async (req, res, next) => {
+  try {
+    const { name, description } = req.body;
+    const updates = {};
+
+    if (typeof name === "string" && name.trim()) {
+      updates.name = name.trim();
+    }
+    if (typeof description === "string") {
+      updates.description = description.trim();
+    }
+
+    if (Object.keys(updates).length === 0) {
+      const error = new Error("No valid project fields provided");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const project = await Project.findByIdAndUpdate(
+      req.project._id,
+      updates,
+      { new: true }
+    ).select("name description updatedAt");
+
+    res.status(200).json({
+      success: true,
+      data: project
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 export const addMemberToProject = async (req, res, next) => {
   try {

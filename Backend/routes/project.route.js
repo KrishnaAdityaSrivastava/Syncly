@@ -1,7 +1,16 @@
 import { Router } from "express";
 
 import authorize from '../middlewares/auth.middleware.js'
-import { addMemberToProject, removeMemberFromProject, changeMemberRole, createProject, getUserProject, getUserProjects, getProjectMembers } from "../controllers/project.controller.js";
+import {
+  addMemberToProject,
+  removeMemberFromProject,
+  changeMemberRole,
+  createProject,
+  getUserProject,
+  getUserProjects,
+  getProjectMembers,
+  updateProjectSettings
+} from "../controllers/project.controller.js";
 import { loadProject, requireProjectAdmin, requireProjectMember } from "../middlewares/projectAccess.middleware.js";
 
 const projectRouter = Router();
@@ -14,5 +23,6 @@ projectRouter.get("/:projectId/members", authorize, loadProject, requireProjectM
 projectRouter.post("/:projectId/members", authorize, loadProject, requireProjectAdmin, addMemberToProject);
 projectRouter.delete("/:projectId/members", authorize, loadProject, requireProjectAdmin, removeMemberFromProject);
 projectRouter.patch("/:projectId/members/role", authorize, loadProject, requireProjectAdmin, changeMemberRole);
+projectRouter.patch("/:projectId/settings", authorize, loadProject, requireProjectAdmin, updateProjectSettings);
 
 export default projectRouter;

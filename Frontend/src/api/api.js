@@ -165,9 +165,18 @@ export const getProjectMembersApi = async (projectId) => {
   return res.data.data; // returns array of members
 };
 
+export const updateProjectSettingsApi = async (projectId, data) => {
+  const res = await api.patch(`/projects/${projectId}/settings`, {
+    name: data.name,
+    description: data.description
+  });
+  return res.data.data;
+};
+
 export const addProjectMemberApi = async (projectId, data) => {
   const res = await api.post(`/projects/${projectId}/members`, {
     userId: data.userId,
+    email: data.email,
     role: data.role || "member"
   });
 
@@ -182,6 +191,34 @@ export const sendProjectInviteApi = async (projectId, email) => {
 export const acceptProjectInviteApi = async (token) => {
   const res = await api.post("/invites/accept", { token });
   return res.data;
+};
+
+export const getUserSettingsApi = async () => {
+  const res = await api.get("/users/settings");
+  return res.data.data;
+};
+
+export const updateUserProfileApi = async (data) => {
+  const res = await api.patch("/users/settings/profile", {
+    name: data.name
+  });
+  return res.data.data;
+};
+
+export const updateUserPasswordApi = async (data) => {
+  const res = await api.patch("/users/settings/password", {
+    currentPassword: data.currentPassword,
+    newPassword: data.newPassword
+  });
+  return res.data;
+};
+
+export const updateUserNotificationsApi = async (data) => {
+  const res = await api.patch("/users/settings/notifications", {
+    email: data.email,
+    inApp: data.inApp
+  });
+  return res.data.data;
 };
 
 
