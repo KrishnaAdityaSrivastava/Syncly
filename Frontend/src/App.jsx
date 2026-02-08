@@ -12,6 +12,7 @@ import ProjectInvite from "./pages/projectInvite.jsx";
 import Settings from "./pages/settings.jsx";
 import ProjectSettings from "./pages/projectSettings.jsx";
 import AdminDashboard from "./pages/adminDashboard.jsx";
+import Messages from "./pages/messages.jsx";
 
 import { NotificationProvider } from "./components/notificationContext.jsx";
 import Layout from "./components/layout.jsx";
@@ -65,6 +66,14 @@ function App() {
           element={
             <Layout defaultActive="Settings">
               <Settings />
+            </Layout>
+          }
+        />
+        <Route
+          path="/messages"
+          element={
+            <Layout defaultActive="Messages">
+              <Messages />
             </Layout>
           }
         />

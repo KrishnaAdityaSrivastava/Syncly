@@ -292,5 +292,34 @@ export const getAdminInvitesApi = async () => {
   return res.data.data;
 };
 
+export const getChatContactsApi = async () => {
+  const res = await api.get("/chats/contacts");
+  return res.data.data;
+};
+
+export const getChatsApi = async () => {
+  const res = await api.get("/chats");
+  return res.data.data;
+};
+
+export const createChatApi = async (recipientId) => {
+  const res = await api.post("/chats", { recipientId });
+  return res.data.data;
+};
+
+export const getChatMessagesApi = async (chatId) => {
+  const res = await api.get(`/chats/${chatId}/messages`);
+  return res.data.data;
+};
+
+export const sendChatMessageApi = async (chatId, body) => {
+  const res = await api.post(`/chats/${chatId}/messages`, { body });
+  return res.data.data;
+};
+
+export const markChatReadApi = async (chatId) => {
+  const res = await api.patch(`/chats/${chatId}/read`);
+  return res.data;
+};
 
 export default api;
