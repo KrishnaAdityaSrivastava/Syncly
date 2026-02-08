@@ -56,11 +56,11 @@ const io = new Server(httpServer, {
 
 // SOCKET EVENTS
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.info("User connected:", socket.id);
 
   socket.on("joinProject", (projectId) => {
     socket.join(projectId);
-    console.log(`User ${socket.id} joined project ${projectId}`);
+    console.info(`User ${socket.id} joined project ${projectId}`);
   });
 
   socket.on("sendMessage", ({ projectId, message }) => {
@@ -68,13 +68,13 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("User disconnected");
+    console.info("User disconnected");
   });
 });
 
 // START SERVER
 httpServer.listen(PORT, async () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.info(`Server running at http://localhost:${PORT}`);
   await ConnectToDatabase();
 });
 

@@ -5,6 +5,16 @@ const api = axios.create({
   withCredentials: true, // send cookies
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401 && window?.location?.pathname !== "/signin") {
+      window.location.href = "/signin";
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const sendOtpApi = async (data) => {
   const res = await api.post("/email/send-otp", { email: data.email });
   return res.data.success;
@@ -24,8 +34,6 @@ export const signUpApi = async (data) => {
     email: data.email,
     password: data.password
   });
-  // console.log(res.data)
-
   return res.data.success;
 };
 
@@ -52,7 +60,6 @@ export const addTaskApi = async (data) => {
       status: 'todo'
     }
   });
-  // console.log(res);
 
   return res.data.data
 }
@@ -65,7 +72,6 @@ export const removeTaskApi = async (data) => {
       id: data.task._id
     }
   });
-  // console.log(res);
 
   return res.data.data
 }
@@ -79,15 +85,12 @@ export const updateTaskApi = async (data) => {
       data: data.data
     }
   });
-  // console.log(res);
 
   return res
 }
 
 export const upgradeTaskApi = async (data) => {
 
-  // console.log("here")
-  // console.log(data)
   if (data.status == 'todo') {
     try {
       const res = await api.post("/tasks/update", {
@@ -103,7 +106,6 @@ export const upgradeTaskApi = async (data) => {
       return res
     }
     catch (err) {
-      console.log(err)
       return err
     }
   }
@@ -122,7 +124,6 @@ export const upgradeTaskApi = async (data) => {
       return res
     }
     catch (err) {
-      console.log(err)
       return err
     }
   }
@@ -130,8 +131,7 @@ export const upgradeTaskApi = async (data) => {
 
 export const dashBoardApi = async () => {
   //await updateTaskApi();
-  const res = await api.get("/users/data");
-  // console.log(res.data.data);
+  const res = await api.get("/users/context");
 
   return res.data.data
 }
@@ -141,20 +141,21 @@ export const createProjectApi = async (data) => {
     name: data.name,
     description: data.description || ""
   });
-  // console.log(res.data)
   return res.data; // contains { message, project }
 };
 
 export const getUserProjectsApi = async () => {
   const res = await api.get("/projects/");
-  // console.log(res.data.data);
+  return res.data.data;
+};
+
+export const getUserProjectApi = async (projectId) => {
+  const res = await api.get(`/projects/${projectId}`);
   return res.data.data;
 };
 
 export const getProjectMembersApi = async (projectId) => {
   const res = await api.get(`/projects/${projectId}/members`);
-  // console.log("HERE")
-  // console.log(res.data)
   return res.data.data; // returns array of members
 };
 

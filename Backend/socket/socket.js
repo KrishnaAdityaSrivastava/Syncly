@@ -1,18 +1,18 @@
 export default function registerSocketHandlers(io) {
 
   io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
+    console.info("User connected:", socket.id);
 
     // join room
     socket.on("join_project", (projectId) => {
       socket.join(`project:${projectId}`);
-      console.log(`${socket.id} joined project:${projectId}`);
+      console.info(`${socket.id} joined project:${projectId}`);
     });
 
     // leave room
     socket.on("leave_project", (projectId) => {
       socket.leave(`project:${projectId}`);
-      console.log(`${socket.id} left project:${projectId}`);
+      console.info(`${socket.id} left project:${projectId}`);
     });
 
     // send message
@@ -26,7 +26,7 @@ export default function registerSocketHandlers(io) {
 
     // disconnect
     socket.on("disconnect", () => {
-      console.log("User disconnected:", socket.id);
+      console.info("User disconnected:", socket.id);
     });
   });
 

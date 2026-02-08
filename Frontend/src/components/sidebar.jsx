@@ -3,9 +3,11 @@ import { LayoutDashboard, FolderKanban, BarChart3, Settings, LogOut, Menu } from
 import { useLocation } from "react-router-dom";
 import { signOutApi } from "../api/api";
 import { useTheme } from "./themeContext.jsx";
+import { useNotification } from "./notificationContext.jsx";
 
 const Sidebar = ({ setLoading, navigate }) => {
   const { darkMode } = useTheme();
+  const { showNotification } = useNotification();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -77,8 +79,13 @@ const Sidebar = ({ setLoading, navigate }) => {
             try {
               await signOutApi();
               navigate("/signin");
+              showNotification("Logged out successfully", "success");
             } catch (err) {
               console.error(err);
+              showNotification(
+                err?.response?.data?.message || "Failed to log out",
+                "error"
+              );
             }
           }}
         >

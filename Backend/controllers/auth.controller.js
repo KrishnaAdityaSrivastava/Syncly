@@ -12,7 +12,6 @@ export const signUp = async (req, res, next) => {
   session.startTransaction();
 
   try {
-    console.log(req.body);
     const { name, email, password } = req.body;
 
     // Check if user already exists
@@ -109,9 +108,15 @@ export const signIn = async (req, res, next) => {
       maxAge: cookieMaxAge,
     });
 
-    const safeUser = user.toObject();
-    delete safeUser._id;
-    delete safeUser.password;
+    const safeUser = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      totalProject: user.totalProject,
+      taskProgress: user.taskProgress,
+      taskCompleted: user.taskCompleted,
+      teamMember: user.teamMember,
+    };
 
     res.status(200).json({
       success: true,
