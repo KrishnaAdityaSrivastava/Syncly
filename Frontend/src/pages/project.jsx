@@ -3,8 +3,10 @@ import { getUserProjectsApi, createProjectApi } from "../api/api.js";
 import ProjectList from "../components/projectList.jsx";
 import Loading from "../components/loading.jsx";
 import { useNotification } from "../components/notificationContext.jsx";
+import { useTheme } from "../components/themeContext.jsx";
 
-const Projects = ({ darkMode }) => {
+const Projects = () => {
+  const { darkMode } = useTheme();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const { showNotification } = useNotification();

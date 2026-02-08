@@ -35,7 +35,7 @@ function NotificationToast({ notification, onClose }) {
   const stylesMap = {
     success: { bg: "bg-green-50", border: "border-green-200", text: "text-green-800", icon: "text-green-600" },
     error: { bg: "bg-red-50", border: "border-red-200", text: "text-red-800", icon: "text-red-600" },
-    info: { bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-800", icon: "text-indigo-600" },
+    info: { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-800", icon: "text-blue-600" },
   };
 
   const getIcon = (type) =>

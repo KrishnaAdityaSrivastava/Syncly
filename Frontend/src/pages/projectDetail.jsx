@@ -10,23 +10,26 @@ import {
 import { MessageSquare, Users, ClipboardList } from "lucide-react";
 import Loading from "../components/loading.jsx";
 import { useNotification } from "../components/notificationContext.jsx";
+import { useTheme } from "../components/themeContext.jsx";
 
 
-const ProjectDetail = ({ darkMode }) => {
+const ProjectDetail = () => {
   const { projectId } = useParams();
   const { showNotification } = useNotification();
+  const { darkMode } = useTheme();
 
   const [project, setProject] = useState(null);
   const [members, setMembers] = useState([]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Invite modal
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
 
-  const isDark = darkMode ?? true;
+  const isDark = darkMode;
 
   const capitalize = (s = "") =>
     s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
@@ -44,7 +47,9 @@ const ProjectDetail = ({ darkMode }) => {
         setProject(thisProject);
         setMembers(memList);
         setActivities(activityList);
+        setErrorMessage("");
       } catch (error) {
+        setErrorMessage(error?.response?.data?.message || "Failed to load project.");
         showNotification(
           error?.response?.data?.message || "Failed to load project.",
           "error"
@@ -58,6 +63,17 @@ const ProjectDetail = ({ darkMode }) => {
   }, [projectId, showNotification]);
 
   if (loading) return <Loading variant="inline" text="Loading Project Details..." />;
+  if (errorMessage) return (
+    <div
+      className={`rounded-xl border p-6 text-sm ${
+        isDark
+          ? "border-red-500/30 bg-red-500/10 text-red-200"
+          : "border-red-200 bg-red-50 text-red-700"
+      }`}
+    >
+      {errorMessage}
+    </div>
+  );
   if (!project) return <div className="p-6">Project not found.</div>;
 
   const proj = project.projectId;

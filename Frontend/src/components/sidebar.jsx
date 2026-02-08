@@ -21,17 +21,17 @@ const Sidebar = ({ setLoading, navigate }) => {
   return (
     <aside
       className={`transition-all duration-300 ${collapsed ? "w-20" : "w-64"} flex flex-col border-r h-screen ${
-        darkMode ? "bg-gray-900 border-gray-700" : "bg-indigo-50 border-indigo-300 shadow-sm"
+        darkMode ? "bg-gray-900 border-gray-700" : "bg-blue-50 border-blue-200 shadow-sm"
       }`}
     >
       {/* Logo + collapse button */}
-      <div className={`flex items-center justify-between p-6 border-b ${darkMode ? "border-gray-700" : "border-indigo-300"}`}>
-        <span className={`text-2xl font-bold tracking-wide ${darkMode ? "text-indigo-400" : "text-indigo-700"} ${collapsed ? "hidden" : "block"}`}>
+      <div className={`flex items-center justify-between p-6 border-b ${darkMode ? "border-gray-700" : "border-blue-200"}`}>
+        <span className={`text-2xl font-bold tracking-wide ${darkMode ? "text-blue-400" : "text-blue-700"} ${collapsed ? "hidden" : "block"}`}>
           SYNCLY
         </span>
         <Menu
           size={20}
-          className={`cursor-pointer ${darkMode ? "text-indigo-400" : "text-indigo-700"}`}
+          className={`cursor-pointer ${darkMode ? "text-blue-400" : "text-blue-700"}`}
           onClick={() => setCollapsed(!collapsed)}
         />
       </div>
@@ -47,11 +47,11 @@ const Sidebar = ({ setLoading, navigate }) => {
               className={`group relative flex items-center w-full px-4 py-2 rounded-lg transition-colors font-medium overflow-hidden ${
                 isActive
                   ? darkMode
-                    ? "bg-indigo-600 text-white"
-                    : "bg-indigo-500 text-white"
+                  ? "bg-blue-600 text-white"
+                    : "bg-blue-500 text-white"
                   : darkMode
-                  ? "text-gray-400 hover:bg-gray-800 hover:text-indigo-400"
-                  : "text-gray-700 hover:bg-indigo-100 hover:text-indigo-700"
+                  ? "text-gray-400 hover:bg-gray-800 hover:text-blue-400"
+                  : "text-gray-700 hover:bg-blue-100 hover:text-blue-700"
               }`}
             >
               <Icon size={20} className="mr-3 flex-shrink-0" />
@@ -60,7 +60,7 @@ const Sidebar = ({ setLoading, navigate }) => {
               {isActive && (
                 <span
                   className={`absolute left-0 top-0 h-full w-1 rounded-r-full ${
-                    darkMode ? "bg-indigo-400" : "bg-white"
+                    darkMode ? "bg-blue-400" : "bg-white"
                   } transition-all duration-300`}
                 />
               )}
@@ -70,10 +70,10 @@ const Sidebar = ({ setLoading, navigate }) => {
       </nav>
 
       {/* Logout Button */}
-      <div className={`p-4 border-t ${darkMode ? "border-gray-700" : "border-indigo-300"}`}>
+      <div className={`p-4 border-t ${darkMode ? "border-gray-700" : "border-blue-200"}`}>
         <button
           className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-lg transition ${
-            darkMode ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-indigo-500 text-white hover:bg-indigo-600"
+            darkMode ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-blue-500 text-white hover:bg-blue-600"
           }`}
           onClick={async () => {
             try {

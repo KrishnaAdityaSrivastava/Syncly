@@ -23,7 +23,7 @@ const Navbar = ({ active, userName = "hi" }) => {
               : "bg-gray-200 border-gray-300 hover:bg-gray-300"
           }`}
         >
-          {darkMode ? <Sun className="text-yellow-400" /> : <Moon className="text-indigo-600" />}
+          {darkMode ? <Sun className="text-yellow-400" /> : <Moon className="text-blue-600" />}
         </button>
 
         <span>Hello, {capitalize(userName.split(" ")[0])}</span>
