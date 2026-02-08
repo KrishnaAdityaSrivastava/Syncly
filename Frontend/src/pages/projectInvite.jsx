@@ -27,7 +27,6 @@ const ProjectInvite = () => {
           navigate("/projects");
         }, 2000);
       } catch (err) {
-        console.error(err);
         setStatus("Failed to accept invite or link expired.");
         setLoading(false);
       }

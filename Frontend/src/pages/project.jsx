@@ -21,7 +21,6 @@ const Projects = ({ darkMode }) => {
       const data = await getUserProjectsApi();
       setProjects(data);
     } catch (err) {
-      console.error("Failed fetching projects:", err);
       showNotification(
         err?.response?.data?.message || "Failed to load projects",
         "error"
@@ -58,7 +57,6 @@ const Projects = ({ darkMode }) => {
       setDescription("");
       showNotification("Project created", "success");
     } catch (err) {
-      console.error("Failed to create project:", err);
       showNotification(
         err?.response?.data?.message || "Failed to create project",
         "error"
