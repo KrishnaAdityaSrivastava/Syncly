@@ -165,6 +165,44 @@ export const getProjectMembersApi = async (projectId) => {
   return res.data.data; // returns array of members
 };
 
+export const getProjectTasksApi = async (projectId) => {
+  const res = await api.get(`/projects/${projectId}/tasks`);
+  return res.data.data;
+};
+
+export const createProjectTaskApi = async (projectId, data) => {
+  const res = await api.post(`/projects/${projectId}/tasks`, {
+    title: data.title,
+    description: data.description,
+    status: data.status,
+    priority: data.priority,
+    assigneeId: data.assigneeId,
+    dueDate: data.dueDate,
+    labels: data.labels
+  });
+  return res.data.data;
+};
+
+export const updateProjectTaskApi = async (projectId, taskId, data) => {
+  const res = await api.patch(`/projects/${projectId}/tasks/${taskId}`, {
+    title: data.title,
+    description: data.description,
+    status: data.status,
+    priority: data.priority,
+    assigneeId: data.assigneeId,
+    dueDate: data.dueDate,
+    labels: data.labels
+  });
+  return res.data.data;
+};
+
+export const addTaskCommentApi = async (projectId, taskId, text) => {
+  const res = await api.post(`/projects/${projectId}/tasks/${taskId}/comments`, {
+    text
+  });
+  return res.data.data;
+};
+
 export const updateProjectSettingsApi = async (projectId, data) => {
   const res = await api.patch(`/projects/${projectId}/settings`, {
     name: data.name,

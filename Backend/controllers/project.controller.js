@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import ProjectMember from '../models/project-member.model.js'
 import Project from '../models/projects.model.js'
+import ProjectActivity from "../models/project-activity.model.js";
 import User from "../models/user.model.js";
 
 export const getUserProjects = async (req, res, next) => {
@@ -115,22 +116,20 @@ export const getProjectActivity = async (req, res, next) => {
   try {
     const { projectId } = req.params;
 
-    const project = await Project.findById(projectId)
-      .select("activity")
-      .populate("activity.actor", "name email")
+    const activity = await ProjectActivity.find({ projectId })
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .populate("actor", "name email")
       .lean();
-
-    if (!project) {
-      return res.status(404).json({ error: "Project not found" });
-    }
-
-    const activity = Array.isArray(project.activity)
-      ? project.activity.slice().reverse()
-      : [];
 
     res.status(200).json({
       success: true,
-      data: activity
+      data: activity.map((item) => ({
+        type: item.type,
+        text: item.text,
+        actor: item.actor,
+        time: item.createdAt
+      }))
     });
   } catch (err) {
     next(err);
@@ -142,19 +141,12 @@ export const addProjectActivity = async ({ projectId, type, text, actor }) => {
     throw new Error("Missing required activity fields");
   }
 
-  await Project.findByIdAndUpdate(
+  await ProjectActivity.create({
     projectId,
-    {
-      $push: {
-        activity: {
-          type,
-          text,
-          actor: actor || undefined,
-        },
-      },
-    },
-    { new: false }
-  );
+    type,
+    text,
+    actor: actor || null
+  });
 };
 
 export const updateProjectSettings = async (req, res, next) => {

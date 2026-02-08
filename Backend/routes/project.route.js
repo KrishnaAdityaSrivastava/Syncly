@@ -12,6 +12,12 @@ import {
   updateProjectSettings
 } from "../controllers/project.controller.js";
 import { loadProject, requireProjectAdmin, requireProjectMember } from "../middlewares/projectAccess.middleware.js";
+import {
+  createProjectTask,
+  getProjectTasks,
+  updateProjectTask,
+  addTaskComment
+} from "../controllers/project-task.controller.js";
 
 const projectRouter = Router();
 
@@ -24,5 +30,10 @@ projectRouter.post("/:projectId/members", authorize, loadProject, requireProject
 projectRouter.delete("/:projectId/members", authorize, loadProject, requireProjectAdmin, removeMemberFromProject);
 projectRouter.patch("/:projectId/members/role", authorize, loadProject, requireProjectAdmin, changeMemberRole);
 projectRouter.patch("/:projectId/settings", authorize, loadProject, requireProjectAdmin, updateProjectSettings);
+
+projectRouter.get("/:projectId/tasks", authorize, loadProject, requireProjectMember, getProjectTasks);
+projectRouter.post("/:projectId/tasks", authorize, loadProject, requireProjectMember, createProjectTask);
+projectRouter.patch("/:projectId/tasks/:taskId", authorize, loadProject, requireProjectMember, updateProjectTask);
+projectRouter.post("/:projectId/tasks/:taskId/comments", authorize, loadProject, requireProjectMember, addTaskComment);
 
 export default projectRouter;
