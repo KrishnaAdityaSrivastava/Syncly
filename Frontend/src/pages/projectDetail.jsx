@@ -47,7 +47,10 @@ const ProjectDetail = ({ darkMode }) => {
           { text: "Invitation sent to John", time: "6 hrs ago" },
         ]);
       } catch (error) {
-        showNotification("Failed to load project.", "error");
+        showNotification(
+          error?.response?.data?.message || "Failed to load project.",
+          "error"
+        );
       } finally {
         setLoading(false);
       }

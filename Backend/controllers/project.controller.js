@@ -69,13 +69,15 @@ export const getProjectMembers = async (req, res, next) => {
     }
 }
 
-export const createProject = async (req, res) => {
+export const createProject = async (req, res, next) => {
     try {
         const { name, description } = req.body;
         const userId = req.user._id;   // auth middleware must set this
 
         if (!name || !name.trim()) {
-            return res.status(400).json({ error: "Project name is required." });
+            const error = new Error("Project name is required.");
+            error.statusCode = 400;
+            throw error;
         }
 
         const project = await Project.create({
@@ -96,11 +98,8 @@ export const createProject = async (req, res) => {
         });
     } catch (err) {
         console.error("Error creating project:", err);
-
-        return res.status(500).json({
-            error: "Something went wrong",
-            details: err.message,
-        });
+        err.statusCode = err.statusCode || 500;
+        next(err);
     }
 };
 
