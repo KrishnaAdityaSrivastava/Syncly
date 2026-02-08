@@ -1,5 +1,7 @@
+import mongoose from "mongoose";
 import ProjectMember from '../models/project-member.model.js'
 import Project from '../models/projects.model.js'
+import User from "../models/user.model.js";
 
 export const getUserProjects = async (req, res, next) => {
   try {
@@ -20,32 +22,6 @@ export const getUserProjects = async (req, res, next) => {
   catch (error) {
     next(error);
   }
-}
-
-export const getUserProject = async (req, res, next) => {
-    try {
-        const userId = req.user._id;
-        const { projectId } = req.params;
-
-        const project = await ProjectMember.findOne({ userId, projectId }).populate(
-            "projectId",
-            "name description activity createdBy createdAt updatedAt"
-        );
-
-        if (!project) {
-            const error = new Error('Project was not found for this user');
-            error.statusCode = 404;
-            throw error;
-        }
-
-        res.status(200).json({
-            success: true,
-            data: project
-        })
-    }
-    catch (error) {
-        next(error);
-    }
 }
 
 export const getUserProject = async (req, res, next) => {
@@ -153,6 +129,26 @@ export const getProjectActivity = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+export const addProjectActivity = async ({ projectId, type, text, actor }) => {
+  if (!projectId || !type || !text) {
+    throw new Error("Missing required activity fields");
+  }
+
+  await Project.findByIdAndUpdate(
+    projectId,
+    {
+      $push: {
+        activity: {
+          type,
+          text,
+          actor: actor || undefined,
+        },
+      },
+    },
+    { new: false }
+  );
 };
 
 

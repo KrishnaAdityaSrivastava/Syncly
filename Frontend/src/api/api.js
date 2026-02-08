@@ -69,7 +69,7 @@ export const removeTaskApi = async (data) => {
   const res = await api.post("/tasks/update", {
     action: 'pull',
     task: {
-      id: data.task._id
+      _id: data.task._id
     }
   });
 
@@ -152,11 +152,6 @@ export const getProjectActivityApi = async (projectId) => {
 
 export const getUserProjectsApi = async () => {
   const res = await api.get("/projects/");
-  return res.data.data;
-};
-
-export const getUserProjectApi = async (projectId) => {
-  const res = await api.get(`/projects/${projectId}`);
   return res.data.data;
 };
 
