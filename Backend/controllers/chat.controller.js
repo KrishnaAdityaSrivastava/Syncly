@@ -39,10 +39,21 @@ const formatChatForUser = async (chat, userId) => {
   };
 };
 
+const activeUserFilter = {
+  $or: [
+    { status: "active" },
+    { status: { $exists: false } },
+    { status: null }
+  ]
+};
+
 export const getUserContacts = async (req, res, next) => {
   try {
     const userId = req.user._id;
-    const users = await User.find({ _id: { $ne: userId }, status: "active" })
+    const users = await User.find({
+      _id: { $ne: userId },
+      ...activeUserFilter
+    })
       .select("name email")
       .sort({ name: 1 });
 
@@ -99,7 +110,7 @@ export const createChat = async (req, res, next) => {
 
     const recipient = await User.findOne({
       _id: recipientId,
-      status: "active"
+      ...activeUserFilter
     }).select("name email");
 
     if (!recipient) {

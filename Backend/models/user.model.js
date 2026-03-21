@@ -1,5 +1,12 @@
 import mongoose from "mongoose";
-import taskSchema from './task.model.js'
+
+const legacyTaskSchema = new mongoose.Schema(
+    {
+        text: { type: String, required: true },
+        status: { type: String, default: "todo" },
+    },
+    { _id: true, timestamps: true }
+);
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -59,8 +66,8 @@ const userSchema = new mongoose.Schema({
             inApp: { type: Boolean, default: true }
         }
     },
-    task: { type: [taskSchema], default: [] }
-    
+    task: { type: [legacyTaskSchema], default: [] }
+
 }, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);

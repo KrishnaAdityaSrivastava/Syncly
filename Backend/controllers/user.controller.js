@@ -1,5 +1,31 @@
 import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
+import Task from "../models/task.model.js";
+
+const buildTaskSummary = (tasks = []) => ({
+  task: tasks,
+  taskProgress: tasks.filter((item) => item.status === "pending").length,
+  taskCompleted: tasks.filter((item) => item.status === "done").length,
+});
+
+const migrateLegacyTasks = async (user) => {
+  const existingCount = await Task.countDocuments({ userId: user._id });
+  const legacyTasks = user.task || [];
+
+  if (existingCount > 0 || legacyTasks.length === 0) {
+    return;
+  }
+
+  await Task.insertMany(
+    legacyTasks.map((item) => ({
+      userId: user._id,
+      text: item.text,
+      status: item.status || "todo",
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    }))
+  );
+};
 
 export const getUsers = async (req, res, next) => {
     try {
@@ -38,13 +64,29 @@ export const getUser = async (req, res, next) => {
 export const getUserContext = async (req, res, next) => {
     try {
         const user = await User.findById(req.user._id).select(
-            "name email role status lastActive totalProject taskProgress taskCompleted teamMember"
+            "name email role status lastActive totalProject teamMember taskProgress taskCompleted task"
         );
 
         if (!user) {
             const error = new Error('User not found');
             error.statusCode = 404;
             throw error;
+        }
+
+        await migrateLegacyTasks(user);
+
+        const tasks = await Task.find({ userId: req.user._id })
+            .sort({ createdAt: -1 })
+            .lean();
+        const taskSummary = buildTaskSummary(tasks);
+
+        if (
+          user.taskProgress !== taskSummary.taskProgress ||
+          user.taskCompleted !== taskSummary.taskCompleted
+        ) {
+          user.taskProgress = taskSummary.taskProgress;
+          user.taskCompleted = taskSummary.taskCompleted;
+          await user.save();
         }
 
         res.status(200).json({
@@ -57,9 +99,8 @@ export const getUserContext = async (req, res, next) => {
                 status: user.status,
                 lastActive: user.lastActive,
                 totalProject: user.totalProject,
-                taskProgress: user.taskProgress,
-                taskCompleted: user.taskCompleted,
-                teamMember: user.teamMember
+                teamMember: user.teamMember,
+                ...taskSummary
             }
         })
     }

@@ -8,6 +8,7 @@ import { parseExpiryToMs } from "../utils/parseExpiry.js";
 import { JWT_SECRET, JWT_EXPIRE, COOKIE_SAME_SITE, COOKIE_SECURE } from "../config/env.js";
 
 const normalizedSameSite = COOKIE_SAME_SITE === 'none' ? 'None' : 'Strict';
+const shouldPartitionCookie = normalizedSameSite === 'None';
 
 const buildAuthCookie = (token, maxAge) => {
   const parts = [
@@ -20,6 +21,10 @@ const buildAuthCookie = (token, maxAge) => {
 
   if (COOKIE_SECURE) {
     parts.push('Secure');
+  }
+
+  if (shouldPartitionCookie) {
+    parts.push('Partitioned');
   }
 
   return parts.join('; ');
@@ -37,6 +42,10 @@ const clearAuthCookie = () => {
 
   if (COOKIE_SECURE) {
     parts.push('Secure');
+  }
+
+  if (shouldPartitionCookie) {
+    parts.push('Partitioned');
   }
 
   return parts.join('; ');
