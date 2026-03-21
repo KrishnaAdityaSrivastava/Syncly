@@ -5,7 +5,20 @@ import bcrypt from "bcryptjs";
 import EmailVerification from "../models/email-verification.model.js";
 import { parseExpiryToMs } from "../utils/parseExpiry.js";
 
-import { JWT_SECRET, JWT_EXPIRE } from "../config/env.js";
+import { JWT_SECRET, JWT_EXPIRE, COOKIE_SAME_SITE, COOKIE_SECURE } from "../config/env.js";
+
+const authCookieOptions = (maxAge) => ({
+  httpOnly: true,
+  secure: COOKIE_SECURE,
+  sameSite: COOKIE_SAME_SITE,
+  maxAge,
+});
+
+const clearedAuthCookieOptions = {
+  httpOnly: true,
+  secure: COOKIE_SECURE,
+  sameSite: COOKIE_SAME_SITE,
+};
 
 export const signUp = async (req, res, next) => {
   const session = await mongoose.startSession();
@@ -54,14 +67,7 @@ export const signUp = async (req, res, next) => {
     const cookieMaxAge = parseExpiryToMs(JWT_EXPIRE);
 
     // Set token in HTTP-only cookie
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: cookieMaxAge,
-    });
-
-
+    res.cookie("token", token, authCookieOptions(cookieMaxAge));
 
     res.status(201).json({
       success: true,
@@ -111,12 +117,7 @@ export const signIn = async (req, res, next) => {
     });
     const cookieMaxAge = parseExpiryToMs(JWT_EXPIRE);
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: cookieMaxAge,
-    });
+    res.cookie("token", token, authCookieOptions(cookieMaxAge));
 
     const safeUser = {
       id: user._id,
@@ -143,11 +144,7 @@ export const signIn = async (req, res, next) => {
 
 export const signOut = async (req, res, next) => {
   try {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    });
+    res.clearCookie("token", clearedAuthCookieOptions);
 
     res.status(200).json({ success: true, message: "Logged out successfully" });
   } catch (error) {
