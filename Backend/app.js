@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 import { createServer } from "http";
 import { Server } from "socket.io";
 
-import { PORT } from './config/env.js';
+import { PORT, CORS_ORIGINS, NODE_ENV } from './config/env.js';
 
 import ConnectToDatabase from './database/mongodb.js';
 
@@ -24,14 +24,22 @@ import arcjetMiddleware from './middlewares/arcject.middleware.js';
 
 const app = express();
 
+const allowedOrigins = new Set(CORS_ORIGINS);
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+};
+
 // EXPRESS CORS
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:5500"
-  ],
-  credentials: true
-}));
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -39,6 +47,17 @@ app.use(cookieParser());
 
 app.use(requestTimer);
 //app.use(arcjetMiddleware);
+
+app.get('/health', (_req, res) => {
+  res.status(200).json({
+    success: true,
+    data: {
+      status: 'ok',
+      env: NODE_ENV,
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
 
 // ROUTES
 app.use('/email', emailVerifyRouter);
@@ -60,7 +79,7 @@ const httpServer = createServer(app);
 // SOCKET.IO SETUP
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: Array.from(allowedOrigins),
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -86,7 +105,8 @@ io.on("connection", (socket) => {
 
 // START SERVER
 httpServer.listen(PORT, async () => {
-  console.info(`Server running at http://localhost:${PORT}`);
+  console.info(`Server running on port ${PORT}`);
+  console.info(`Allowed CORS origins: ${Array.from(allowedOrigins).join(', ')}`);
   await ConnectToDatabase();
 });
 
