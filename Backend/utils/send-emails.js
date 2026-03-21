@@ -3,7 +3,7 @@ import { verificationEmail, projectInviteEmail } from './email-template.js';
 
 const handleEmailError = (error) => {
     if (error?.code === 'ETIMEDOUT') {
-        const serviceError = new Error('Email server connection timed out. Configure SMTP_HOST/SMTP_PORT/SMTP_SERVICE for your mail provider and verify Render outbound access.');
+        const serviceError = new Error('Email server connection timed out while using the Gmail transporter.');
         serviceError.statusCode = 503;
         throw serviceError;
     }
