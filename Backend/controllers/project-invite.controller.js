@@ -3,7 +3,8 @@ import { sendProjectInviteEmail } from "../utils/send-emails.js";
 import ProjectInvite from "../models/project-invite.model.js";
 import ProjectMember from "../models/project-member.model.js";
 import User from "../models/user.model.js";
-import {addProjectActivity} from './project.controller.js';
+import { addProjectActivity } from './project.controller.js';
+import { CLIENT_URL, INVITE_SECRET } from "../config/env.js";
 
 export const sendProjectInvite = async (req, res) => {
   try {
@@ -18,7 +19,7 @@ export const sendProjectInvite = async (req, res) => {
     // Create invite token
     const token = jwt.sign(
       { email, projectId: project._id, role },
-      process.env.INVITE_SECRET,
+      INVITE_SECRET,
       { expiresIn: "72h" }
     );
 
@@ -37,7 +38,7 @@ export const sendProjectInvite = async (req, res) => {
       to: email,
       invitedBy: req.user.name,
       projectName: project.name,
-      inviteLink: `${process.env.CLIENT_URL}/invites?token=${token}`,
+      inviteLink: `${CLIENT_URL}/invites?token=${token}`,
     });
 
     await addProjectActivity({
@@ -62,7 +63,7 @@ export const acceptProjectInvite = async (req, res) => {
       return res.status(400).json({ message: "Token required" });
     }
 
-    const decoded = jwt.verify(token, process.env.INVITE_SECRET);
+    const decoded = jwt.verify(token, INVITE_SECRET);
     const { email, projectId, role } = decoded;
 
     const user = await User.findOne({ email });
