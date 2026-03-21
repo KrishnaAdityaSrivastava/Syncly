@@ -1,7 +1,13 @@
 import axios from "axios";
 
+const trimTrailingSlash = (value) => value?.replace(/\/$/, "");
+
+const apiBaseUrl = trimTrailingSlash(
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5500"
+);
+
 const api = axios.create({
-  baseURL: "http://localhost:5500",
+  baseURL: apiBaseUrl,
   withCredentials: true, // send cookies
 });
 

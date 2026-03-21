@@ -8,7 +8,10 @@ const transporter = nodemailer.createTransport({
     auth: {
         user: accountEmail,
         pass: EMAIL_PASSWORD
-    }
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
 })
 
 export default transporter;
