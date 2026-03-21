@@ -6,7 +6,7 @@ import { Server } from "socket.io";
 
 import { PORT, CORS_ORIGINS, NODE_ENV } from './config/env.js';
 
-import ConnectToDatabase from './database/mongodb.js';
+import ConnectToDatabase, { getDatabaseStatus } from './database/mongodb.js';
 
 import authRouter from './routes/auth.route.js';
 import userRouter from './routes/user.route.js';
@@ -24,6 +24,13 @@ import arcjetMiddleware from './middlewares/arcject.middleware.js';
 
 const app = express();
 
+const databaseStateLabel = {
+  0: 'disconnected',
+  1: 'connected',
+  2: 'connecting',
+  3: 'disconnecting',
+};
+
 const allowedOrigins = new Set(CORS_ORIGINS);
 const corsOptions = {
   origin(origin, callback) {
@@ -37,7 +44,6 @@ const corsOptions = {
   credentials: true,
 };
 
-// EXPRESS CORS
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
@@ -46,20 +52,22 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use(requestTimer);
-//app.use(arcjetMiddleware);
+// app.use(arcjetMiddleware);
 
 app.get('/health', (_req, res) => {
+  const databaseStatus = databaseStateLabel[getDatabaseStatus()] || 'unknown';
+
   res.status(200).json({
     success: true,
     data: {
       status: 'ok',
       env: NODE_ENV,
+      databaseStatus,
       timestamp: new Date().toISOString(),
     },
   });
 });
 
-// ROUTES
 app.use('/email', emailVerifyRouter);
 app.use('/auth', authRouter);
 app.use('/users', userRouter);
@@ -70,22 +78,18 @@ app.use("/admin", adminRouter);
 app.use("/chats", chatRouter);
 app.use("/notifications", notificationRouter);
 
-// ERROR HANDLER
 app.use(errorMiddleware);
 
-// CREATE HTTP SERVER (NEEDED FOR SOCKET.IO)
 const httpServer = createServer(app);
 
-// SOCKET.IO SETUP
 const io = new Server(httpServer, {
   cors: {
     origin: Array.from(allowedOrigins),
     methods: ["GET", "POST"],
-    credentials: true
-  }
+    credentials: true,
+  },
 });
 
-// SOCKET EVENTS
 io.on("connection", (socket) => {
   console.info("User connected:", socket.id);
 
@@ -103,11 +107,13 @@ io.on("connection", (socket) => {
   });
 });
 
-// START SERVER
-httpServer.listen(PORT, async () => {
+httpServer.listen(PORT, '0.0.0.0', () => {
   console.info(`Server running on port ${PORT}`);
   console.info(`Allowed CORS origins: ${Array.from(allowedOrigins).join(', ')}`);
-  await ConnectToDatabase();
+
+  ConnectToDatabase().catch((error) => {
+    console.error('Database connection error:', error.message);
+  });
 });
 
 export default app;

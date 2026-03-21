@@ -9,7 +9,7 @@ const envFiles = [
 ];
 
 for (const path of envFiles) {
-  config({ path, override: false });
+  config({ path, override: false, quiet: true });
 }
 
 const parseCsv = (value) =>

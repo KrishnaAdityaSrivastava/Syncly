@@ -92,6 +92,11 @@ npm install
 npm run dev
 ```
 
+## Troubleshooting Render startup
+
+- The backend already binds to `0.0.0.0`, so you only need to make sure Render provides `PORT` automatically.
+- If MongoDB logs `querySrv ENOTFOUND`, the problem is your `DB_URI` host/DNS value. Re-check the Atlas cluster hostname, credentials, and IP/network access settings.
+
 ## Production readiness changes included
 
 - backend CORS and cookies are environment-aware,
