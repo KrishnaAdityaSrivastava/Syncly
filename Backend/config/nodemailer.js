@@ -1,14 +1,7 @@
 import nodemailer from "nodemailer";
 
 import {
-  EMAIL_FROM,
-  EMAIL_PASSWORD,
-  EMAIL_USER,
-  SMTP_CONNECTION_TIMEOUT,
-  SMTP_HOST,
-  SMTP_PORT,
-  SMTP_SECURE,
-  SMTP_SERVICE,
+  EMAIL_PASSWORD
 } from "./env.js";
 
 export const accountEmail = 'krishnaadityasrivastavaed@gmail.com';
