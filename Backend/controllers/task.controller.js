@@ -1,69 +1,98 @@
+import Task from "../models/task.model.js";
 import User from "../models/user.model.js";
 
-// export const getTask = async (req, res, next) => {
-//     try {
-//         const task = await User.findById(req.user._id).task;//.select('-email');
+const buildTaskStats = (tasks = []) => ({
+    taskProgress: tasks.filter((item) => item.status === "pending").length,
+    taskCompleted: tasks.filter((item) => item.status === "done").length,
+});
 
-//         if (!task) {
-//             const error = new Error('No task found');
-//             error.statusCode = 404;
-//             throw error;
-//         }
+const migrateLegacyTasks = async (userId) => {
+    const user = await User.findById(userId).select("task");
+    if (!user || !user.task?.length) {
+        return;
+    }
 
-//         res.status(200).json({
-//             success: true,
-//             data: task
-//         })
-//     }
-//     catch (error) {
-//         next(error);
-//     }
-// }
+    const existingCount = await Task.countDocuments({ userId });
+    if (existingCount > 0) {
+        return;
+    }
+
+    await Task.insertMany(
+        user.task.map((item) => ({
+            userId,
+            text: item.text,
+            status: item.status || "todo",
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
+        }))
+    );
+};
+
+const syncUserTaskCounters = async (userId, tasks) => {
+    const stats = buildTaskStats(tasks);
+
+    await User.findByIdAndUpdate(userId, {
+        taskProgress: stats.taskProgress,
+        taskCompleted: stats.taskCompleted,
+    });
+
+    return stats;
+};
+
+const loadUserTasks = async (userId) => {
+    await migrateLegacyTasks(userId);
+    const tasks = await Task.find({ userId }).sort({ createdAt: -1 }).lean();
+    const stats = await syncUserTaskCounters(userId, tasks);
+
+    return { tasks, stats };
+};
 
 export const updateTask = async (req, res, next) => {
     try {
         const userId = req.user._id;
-
         const { action, task } = req.body;
-        // action: "push" or "pull"
-        // task: object to push OR {_id: "..."} to pull
-
-        let updateQuery = {};
 
         if (action === "push") {
-            updateQuery = { $push: { task: task } };
-        } else if (action === "pull") {
-            updateQuery = { $pull: { task: { _id: task._id } } };
-        } else if (action === "update") {
-            const { _id, data } = task;
-            updateQuery = { $set: {} };
-            for (const [key, value] of Object.entries(data)) {
-                updateQuery.$set[`task.$.${key}`] = value;
+            if (!task?.text?.trim()) {
+                return res.status(400).json({ success: false, message: "Task text is required" });
             }
 
-            await User.updateOne(
-                { _id: userId, "task._id": _id },
-                updateQuery
-            );
-
-            const updatedUser = await User.findById(userId);
-            return res.status(200).json({
-                success: true,
-                data: updatedUser.task,
+            await Task.create({
+                userId,
+                text: task.text.trim(),
+                status: task.status || "todo",
             });
+        } else if (action === "pull") {
+            await Task.deleteOne({ _id: task?._id, userId });
+        } else if (action === "update") {
+            const { _id, data } = task || {};
+            if (!_id || !data || typeof data !== "object") {
+                return res.status(400).json({ success: false, message: "Invalid task update payload" });
+            }
+
+            const updates = {};
+            if (typeof data.text === "string" && data.text.trim()) {
+                updates.text = data.text.trim();
+            }
+            if (typeof data.status === "string") {
+                updates.status = data.status;
+            }
+
+            await Task.findOneAndUpdate(
+                { _id, userId },
+                updates,
+                { new: true, runValidators: true }
+            );
         } else {
             return res.status(400).json({ success: false, message: "Invalid action" });
         }
 
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            updateQuery,
-            { new: true }
-        );
+        const { tasks, stats } = await loadUserTasks(userId);
 
         res.status(200).json({
             success: true,
-            data: updatedUser.task,
+            data: tasks,
+            meta: stats,
         });
     } catch (error) {
         next(error);
