@@ -8,7 +8,9 @@
     "dev": "nodemon app.js"
   },
   "nodemonConfig": {
-    "ignore": ["logs/*"]
+    "ignore": [
+      "logs/*"
+    ]
   },
   "dependencies": {
     "@arcjet/inspect": "^1.0.0-beta.10",
@@ -25,6 +27,7 @@
     "mongoose": "^8.18.0",
     "morgan": "~1.9.1",
     "nodemailer": "^7.0.6",
+    "resend": "^6.9.4",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
