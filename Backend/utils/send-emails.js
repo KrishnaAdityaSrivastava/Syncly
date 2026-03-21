@@ -1,22 +1,35 @@
 import transporter, { accountEmail } from '../config/nodemailer.js'
-import {  verificationEmail, projectInviteEmail } from './email-template.js';
+import { verificationEmail, projectInviteEmail } from './email-template.js';
+
+const handleEmailError = (error) => {
+    if (error?.code === 'ETIMEDOUT') {
+        const serviceError = new Error('Email server connection timed out. Configure SMTP_HOST/SMTP_PORT/SMTP_SERVICE for your mail provider and verify Render outbound access.');
+        serviceError.statusCode = 503;
+        throw serviceError;
+    }
+
+    const serviceError = new Error(error?.message || 'Failed to send email');
+    serviceError.statusCode = 503;
+    throw serviceError;
+};
 
 export const sendVerificationEmail = async({ to, otpCode })=> {
-    
     if(!to || !otpCode) throw new Error("Missing required parameters");
 
     const message = verificationEmail({otpCode});
 
     const mailOptions = {
         from: accountEmail,
-        to: to,
+        to,
         subject: 'Your Verification Email',
         html: message
-    }
+    };
 
-    await transporter.sendMail(mailOptions,(error, info) => {
-        if (error) return console.error(error, "Error Sending Email");
-    })
+    try {
+        await transporter.sendMail(mailOptions);
+    } catch (error) {
+        handleEmailError(error);
+    }
 }
 
 export const sendProjectInviteEmail = async ({ to, projectName, inviteLink }) => {
@@ -36,7 +49,9 @@ export const sendProjectInviteEmail = async ({ to, projectName, inviteLink }) =>
         html: message,
     };
 
-    await transporter.sendMail(mailOptions, (error, info) => {
-        if (error) return console.error("Error Sending Invitation:", error);
-    });
+    try {
+        await transporter.sendMail(mailOptions);
+    } catch (error) {
+        handleEmailError(error);
+    }
 };

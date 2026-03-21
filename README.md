@@ -42,10 +42,14 @@ Set these in Render using `Backend/.env.example` as the template:
 - `CLIENT_URL=https://<your-vercel-domain>`
 - `CORS_ORIGINS=https://<your-vercel-domain>`
 - `COOKIE_SAME_SITE=none`
+- `EMAIL_USER`
 - `EMAIL_PASSWORD`
-- optional: `ARCJET_KEY`, `ARCJET_ENV`
+- `EMAIL_FROM`
+- `SMTP_SERVICE` or (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`)
+- optional: `SMTP_CONNECTION_TIMEOUT`, `ARCJET_KEY`, `ARCJET_ENV`
 
 > If you later add a custom frontend domain, include both domains in `CORS_ORIGINS` as a comma-separated list.
+> For Render deployments, using a dedicated SMTP provider is more reliable than relying on a hard-coded Gmail service configuration.
 
 ## Deploying the frontend to Vercel
 
