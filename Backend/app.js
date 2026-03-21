@@ -52,7 +52,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use(requestTimer);
-// app.use(arcjetMiddleware);
+app.use(arcjetMiddleware);
 
 app.get('/health', (_req, res) => {
   const databaseStatus = databaseStateLabel[getDatabaseStatus()] || 'unknown';

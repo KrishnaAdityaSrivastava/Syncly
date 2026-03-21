@@ -1,36 +1,33 @@
-import transporter, { accountEmail } from '../config/nodemailer.js'
+import { Resend } from 'resend';
 import { verificationEmail, projectInviteEmail } from './email-template.js';
 
-const handleEmailError = (error) => {
-    if (error?.code === 'ETIMEDOUT') {
-        const serviceError = new Error('Email server connection timed out while using the Gmail transporter.');
-        serviceError.statusCode = 503;
-        throw serviceError;
-    }
+const resend = new Resend(process.env.RESEND_API_KEY);
 
+// You can set this in env instead of accountEmail
+const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+
+const handleEmailError = (error) => {
     const serviceError = new Error(error?.message || 'Failed to send email');
     serviceError.statusCode = 503;
     throw serviceError;
 };
 
-export const sendVerificationEmail = async({ to, otpCode })=> {
-    if(!to || !otpCode) throw new Error("Missing required parameters");
+export const sendVerificationEmail = async ({ to, otpCode }) => {
+    if (!to || !otpCode) throw new Error("Missing required parameters");
 
-    const message = verificationEmail({otpCode});
-
-    const mailOptions = {
-        from: accountEmail,
-        to,
-        subject: 'Your Verification Email',
-        html: message
-    };
+    const message = verificationEmail({ otpCode });
 
     try {
-        await transporter.sendMail(mailOptions);
+        await resend.emails.send({
+            from: FROM_EMAIL,
+            to,
+            subject: 'Your Verification Email',
+            html: message,
+        });
     } catch (error) {
         handleEmailError(error);
     }
-}
+};
 
 export const sendProjectInviteEmail = async ({ to, projectName, inviteLink }) => {
     if (!to || !projectName || !inviteLink) {
@@ -42,15 +39,13 @@ export const sendProjectInviteEmail = async ({ to, projectName, inviteLink }) =>
         inviteLink
     });
 
-    const mailOptions = {
-        from: accountEmail,
-        to,
-        subject: `You're Invited to Join ${projectName}!`,
-        html: message,
-    };
-
     try {
-        await transporter.sendMail(mailOptions);
+        await resend.emails.send({
+            from: FROM_EMAIL,
+            to,
+            subject: `You're Invited to Join ${projectName}!`,
+            html: message,
+        });
     } catch (error) {
         handleEmailError(error);
     }
