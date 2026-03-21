@@ -112,6 +112,11 @@ httpServer.listen(PORT, '0.0.0.0', () => {
   console.info(`Allowed CORS origins: ${Array.from(allowedOrigins).join(', ')}`);
 
   ConnectToDatabase().catch((error) => {
+    if (error?.code === 'ENOTFOUND') {
+      console.error('Database connection error: MongoDB hostname could not be resolved. Check your DB_URI Atlas host, credentials, and network access settings.');
+      return;
+    }
+
     console.error('Database connection error:', error.message);
   });
 });

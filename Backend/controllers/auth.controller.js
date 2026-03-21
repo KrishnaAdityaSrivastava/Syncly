@@ -7,17 +7,39 @@ import { parseExpiryToMs } from "../utils/parseExpiry.js";
 
 import { JWT_SECRET, JWT_EXPIRE, COOKIE_SAME_SITE, COOKIE_SECURE } from "../config/env.js";
 
-const authCookieOptions = (maxAge) => ({
-  httpOnly: true,
-  secure: COOKIE_SECURE,
-  sameSite: COOKIE_SAME_SITE,
-  maxAge,
-});
+const normalizedSameSite = COOKIE_SAME_SITE === 'none' ? 'None' : 'Strict';
 
-const clearedAuthCookieOptions = {
-  httpOnly: true,
-  secure: COOKIE_SECURE,
-  sameSite: COOKIE_SAME_SITE,
+const buildAuthCookie = (token, maxAge) => {
+  const parts = [
+    `token=${encodeURIComponent(token)}`,
+    'Path=/',
+    'HttpOnly',
+    `SameSite=${normalizedSameSite}`,
+    `Max-Age=${Math.floor(maxAge / 1000)}`,
+  ];
+
+  if (COOKIE_SECURE) {
+    parts.push('Secure');
+  }
+
+  return parts.join('; ');
+};
+
+const clearAuthCookie = () => {
+  const parts = [
+    'token=',
+    'Path=/',
+    'HttpOnly',
+    `SameSite=${normalizedSameSite}`,
+    'Max-Age=0',
+    'Expires=Thu, 01 Jan 1970 00:00:00 GMT',
+  ];
+
+  if (COOKIE_SECURE) {
+    parts.push('Secure');
+  }
+
+  return parts.join('; ');
 };
 
 export const signUp = async (req, res, next) => {
@@ -67,7 +89,7 @@ export const signUp = async (req, res, next) => {
     const cookieMaxAge = parseExpiryToMs(JWT_EXPIRE);
 
     // Set token in HTTP-only cookie
-    res.cookie("token", token, authCookieOptions(cookieMaxAge));
+    res.append("Set-Cookie", buildAuthCookie(token, cookieMaxAge));
 
     res.status(201).json({
       success: true,
@@ -117,7 +139,7 @@ export const signIn = async (req, res, next) => {
     });
     const cookieMaxAge = parseExpiryToMs(JWT_EXPIRE);
 
-    res.cookie("token", token, authCookieOptions(cookieMaxAge));
+    res.append("Set-Cookie", buildAuthCookie(token, cookieMaxAge));
 
     const safeUser = {
       id: user._id,
@@ -144,7 +166,7 @@ export const signIn = async (req, res, next) => {
 
 export const signOut = async (req, res, next) => {
   try {
-    res.clearCookie("token", clearedAuthCookieOptions);
+    res.append("Set-Cookie", clearAuthCookie());
 
     res.status(200).json({ success: true, message: "Logged out successfully" });
   } catch (error) {
