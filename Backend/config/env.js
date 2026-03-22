@@ -21,6 +21,10 @@ const parseCsv = (value) =>
     : [];
 
 const normalizeOrigin = (value) => value?.replace(/\/$/, '');
+const parseBoolean = (value, defaultValue = false) => {
+  if (value === undefined) return defaultValue;
+  return ["1", "true", "yes", "on"].includes(String(value).toLowerCase());
+};
 
 const rawClientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 const clientUrl = normalizeOrigin(rawClientUrl);
@@ -52,6 +56,7 @@ export const env = {
   CORS_ORIGINS: corsOrigins,
   COOKIE_SAME_SITE: cookieSameSite,
   COOKIE_SECURE: cookieSecure,
+  EMAIL_VERIFICATION_REQUIRED: parseBoolean(process.env.EMAIL_VERIFICATION_REQUIRED, true),
 };
 
 export const {
@@ -68,4 +73,5 @@ export const {
   CORS_ORIGINS,
   COOKIE_SAME_SITE,
   COOKIE_SECURE,
+  EMAIL_VERIFICATION_REQUIRED,
 } = env;

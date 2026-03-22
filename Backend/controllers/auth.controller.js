@@ -5,7 +5,13 @@ import bcrypt from "bcryptjs";
 import EmailVerification from "../models/email-verification.model.js";
 import { parseExpiryToMs } from "../utils/parseExpiry.js";
 
-import { JWT_SECRET, JWT_EXPIRE, COOKIE_SAME_SITE, COOKIE_SECURE } from "../config/env.js";
+import {
+  JWT_SECRET,
+  JWT_EXPIRE,
+  COOKIE_SAME_SITE,
+  COOKIE_SECURE,
+  EMAIL_VERIFICATION_REQUIRED,
+} from "../config/env.js";
 
 const normalizedSameSite = COOKIE_SAME_SITE === 'none' ? 'None' : 'Strict';
 const shouldPartitionCookie = normalizedSameSite === 'None';
@@ -58,7 +64,6 @@ export const signUp = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       const error = new Error("User already exists");
@@ -67,22 +72,21 @@ export const signUp = async (req, res, next) => {
       throw error;
     }
 
-    // Check if email is verified
-    const verification = await EmailVerification.findOne({ email });
-    if (!verification || !verification.verified) {
-      const error = new Error("Email not verified");
-      error.errorType = "EMAIL_NOT_VERIFIED";
-      error.statusCode = 400;
-      throw error;
+    if (EMAIL_VERIFICATION_REQUIRED) {
+      const verification = await EmailVerification.findOne({ email });
+      if (!verification || !verification.verified) {
+        const error = new Error("Email not verified");
+        error.errorType = "EMAIL_NOT_VERIFIED";
+        error.statusCode = 400;
+        throw error;
+      }
+
+      await EmailVerification.deleteOne({ email });
     }
 
-    await EmailVerification.deleteOne({ email: email });
-
-    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user
     const [newUser] = await User.create(
       [{ name, email, password: hashedPassword }],
       { session }
@@ -91,19 +95,17 @@ export const signUp = async (req, res, next) => {
     await session.commitTransaction();
     session.endSession();
 
-    // Generate JWT token
     const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, {
       expiresIn: JWT_EXPIRE,
     });
     const cookieMaxAge = parseExpiryToMs(JWT_EXPIRE);
 
-    // Set token in HTTP-only cookie
     res.append("Set-Cookie", buildAuthCookie(token, cookieMaxAge));
 
     res.status(201).json({
       success: true,
       message: "User created and logged in successfully",
-      data: { user: newUser }, // token already in cookie
+      data: { user: newUser },
     });
   } catch (error) {
     await session.abortTransaction();
@@ -141,7 +143,6 @@ export const signIn = async (req, res, next) => {
 
     user.lastActive = new Date();
     await user.save();
-
 
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
       expiresIn: JWT_EXPIRE,

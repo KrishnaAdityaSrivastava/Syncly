@@ -46,6 +46,23 @@ const ProjectDetail = () => {
   const capitalize = (s = "") =>
     s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
 
+  const getUserDisplayName = (user) => {
+    const name = user?.name?.trim();
+    const email = user?.email?.trim();
+    return name || email || "Unknown user";
+  };
+
+  const getRoleLabel = (role = "") => {
+    const labels = {
+      admin: "Admin",
+      manager: "Manager",
+      member: "Member",
+      viewer: "Viewer"
+    };
+
+    return labels[role] || capitalize(role) || "Member";
+  };
+
   // Fetch project + members
   useEffect(() => {
     const fetchData = async () => {
@@ -286,7 +303,7 @@ const ProjectDetail = () => {
                 <option value="">Unassigned</option>
                 {members.map((member) => (
                   <option key={member._id} value={member.userId._id}>
-                    {member.userId.name}
+                    {getUserDisplayName(member.userId)}
                   </option>
                 ))}
               </select>
@@ -330,7 +347,7 @@ const ProjectDetail = () => {
                         <div>
                           <p className="font-medium">{task.title}</p>
                           {task.assignee && (
-                            <p className="text-xs text-gray-400">Assignee: {task.assignee.name}</p>
+                            <p className="text-xs text-gray-400">Assignee: {getUserDisplayName(task.assignee)}</p>
                           )}
                           <p className="text-xs text-gray-400">
                             Priority: {task.priority} {task.dueDate ? `· Due ${new Date(task.dueDate).toLocaleDateString()}` : ""}
@@ -368,7 +385,7 @@ const ProjectDetail = () => {
                         <div className="mt-3 space-y-2">
                           {task.comments.map((comment) => (
                             <div key={comment._id || comment.createdAt} className={`rounded-md px-2 py-1 text-xs ${isDark ? "bg-gray-700" : "bg-gray-100"}`}>
-                              <p className="font-medium">{comment.author?.name || "User"}</p>
+                              <p className="font-medium">{getUserDisplayName(comment.author)}</p>
                               <p className="opacity-70">{comment.text}</p>
                             </div>
                           ))}
@@ -469,8 +486,14 @@ const ProjectDetail = () => {
                 key={m._id}
                 className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-gray-100"}`}
               >
-                <p className="font-medium">{capitalize(m.userId.name)}</p>
-                <p className="text-xs opacity-60">({capitalize(m.role)})</p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium">{getUserDisplayName(m.userId)}</p>
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                    isDark ? "bg-gray-800 text-blue-200" : "bg-white text-blue-700"
+                  }`}>
+                    {getRoleLabel(m.role)}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
