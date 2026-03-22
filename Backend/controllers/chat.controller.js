@@ -8,16 +8,28 @@ const buildParticipantKey = (userId, recipientId) => {
   return `${ids[0]}:${ids[1]}`;
 };
 
+const activeUserFilter = {
+  $or: [
+    { status: "active" },
+    { status: { $exists: false } },
+    { status: null }
+  ]
+};
+
 const formatChatForUser = async (chat, userId) => {
   const participant = chat.participants.find(
     (member) => member._id.toString() !== userId.toString()
   );
 
-  const unreadCount = await Message.countDocuments({
-    chatId: chat._id,
-    recipientId: userId,
-    readAt: null
-  });
+  const unreadCount = chat.status === "accepted"
+    ? await Message.countDocuments({
+        chatId: chat._id,
+        recipientId: userId,
+        readAt: null
+      })
+    : 0;
+
+  const isRequester = chat.requestedBy?.toString?.() === userId.toString();
 
   return {
     id: chat._id,
@@ -28,6 +40,8 @@ const formatChatForUser = async (chat, userId) => {
           email: participant.email
         }
       : null,
+    status: chat.status || "accepted",
+    isRequester,
     lastMessage: chat.lastMessage?.text
       ? {
           text: chat.lastMessage.text,
@@ -35,16 +49,39 @@ const formatChatForUser = async (chat, userId) => {
           createdAt: chat.lastMessage.createdAt
         }
       : null,
-    unreadCount
+    unreadCount,
+    requestedAt: chat.createdAt,
+    acceptedAt: chat.acceptedAt || null
   };
 };
 
-const activeUserFilter = {
-  $or: [
-    { status: "active" },
-    { status: { $exists: false } },
-    { status: null }
-  ]
+const loadChat = async (chatId, userId) => {
+  const chat = await Chat.findById(chatId).populate("participants", "name email");
+  if (!chat) {
+    const error = new Error("Chat not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const isParticipant = chat.participants.some(
+    (participant) => participant._id.toString() === userId.toString()
+  );
+  if (!isParticipant) {
+    const error = new Error("Unauthorized chat access");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  return chat;
+};
+
+const emitChatUpdate = async (req, userIds, payload) => {
+  const io = req.app.get("io");
+  if (!io) return;
+
+  userIds.forEach((id) => {
+    io.to(`user:${id.toString()}`).emit("chat:update", payload);
+  });
 };
 
 export const getUserContacts = async (req, res, next) => {
@@ -78,13 +115,15 @@ export const getChats = async (req, res, next) => {
       .sort({ updatedAt: -1 })
       .lean();
 
-    const formattedChats = await Promise.all(
-      chats.map((chat) => formatChatForUser(chat, userId))
-    );
+    const formattedChats = await Promise.all(chats.map((chat) => formatChatForUser(chat, userId)));
 
     res.status(200).json({
       success: true,
-      data: formattedChats
+      data: {
+        chats: formattedChats.filter((chat) => chat.status === "accepted"),
+        incomingRequests: formattedChats.filter((chat) => chat.status === "pending" && !chat.isRequester),
+        outgoingRequests: formattedChats.filter((chat) => chat.status === "pending" && chat.isRequester)
+      }
     });
   } catch (error) {
     next(error);
@@ -108,11 +147,7 @@ export const createChat = async (req, res, next) => {
       throw error;
     }
 
-    const recipient = await User.findOne({
-      _id: recipientId,
-      ...activeUserFilter
-    }).select("name email");
-
+    const recipient = await User.findOne({ _id: recipientId, ...activeUserFilter }).select("name email");
     if (!recipient) {
       const error = new Error("Recipient not found");
       error.statusCode = 404;
@@ -120,54 +155,78 @@ export const createChat = async (req, res, next) => {
     }
 
     const participantKey = buildParticipantKey(userId, recipientId);
-    let chat = await Chat.findOne({ participantKey }).populate(
-      "participants",
-      "name email"
-    );
+    let chat = await Chat.findOne({ participantKey }).populate("participants", "name email");
 
     if (!chat) {
       chat = await Chat.create({
         participants: [userId, recipientId],
-        participantKey
+        participantKey,
+        status: "pending",
+        requestedBy: userId
       });
-      chat = await Chat.findById(chat._id).populate(
-        "participants",
-        "name email"
-      );
+      chat = await Chat.findById(chat._id).populate("participants", "name email");
+    } else if (chat.status === "rejected") {
+      chat.status = "pending";
+      chat.requestedBy = userId;
+      chat.acceptedAt = null;
+      chat.lastMessage = { text: "", sender: null, createdAt: null };
+      await chat.save();
     }
 
     const formatted = await formatChatForUser(chat.toObject(), userId);
 
-    res.status(201).json({
-      success: true,
-      data: formatted
+    await createNotification({
+      userId: recipient._id,
+      type: "DIRECT_MESSAGE",
+      message: `${req.user.name || "A teammate"} sent you a chat request`,
+      entity: chat._id,
+      createdBy: userId
     });
+
+    await emitChatUpdate(req, [userId, recipientId], { type: "request_created", chatId: chat._id.toString() });
+
+    res.status(201).json({ success: true, data: formatted });
   } catch (error) {
     next(error);
   }
 };
 
-const loadChat = async (chatId, userId) => {
-  const chat = await Chat.findById(chatId).populate(
-    "participants",
-    "name email"
-  );
-  if (!chat) {
-    const error = new Error("Chat not found");
-    error.statusCode = 404;
-    throw error;
-  }
+export const updateChatRequest = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const { chatId } = req.params;
+    const { action } = req.body;
 
-  const isParticipant = chat.participants.some(
-    (participant) => participant._id.toString() === userId.toString()
-  );
-  if (!isParticipant) {
-    const error = new Error("Unauthorized chat access");
-    error.statusCode = 403;
-    throw error;
-  }
+    if (!["accept", "reject"].includes(action)) {
+      const error = new Error("Invalid action");
+      error.statusCode = 400;
+      throw error;
+    }
 
-  return chat;
+    const chat = await loadChat(chatId, userId);
+    if (chat.status !== "pending") {
+      const error = new Error("This request is no longer pending");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (chat.requestedBy?.toString() === userId.toString()) {
+      const error = new Error("You cannot respond to your own request");
+      error.statusCode = 403;
+      throw error;
+    }
+
+    chat.status = action === "accept" ? "accepted" : "rejected";
+    chat.acceptedAt = action === "accept" ? new Date() : null;
+    await chat.save();
+
+    const requesterId = chat.requestedBy;
+    await emitChatUpdate(req, [userId, requesterId], { type: `request_${action}ed`, chatId: chat._id.toString() });
+
+    res.status(200).json({ success: true, data: await formatChatForUser(chat.toObject(), userId) });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const getChatMessages = async (req, res, next) => {
@@ -175,12 +234,12 @@ export const getChatMessages = async (req, res, next) => {
     const userId = req.user._id;
     const { chatId } = req.params;
 
-    await loadChat(chatId, userId);
+    const chat = await loadChat(chatId, userId);
+    if (chat.status !== "accepted") {
+      return res.status(200).json({ success: true, data: [] });
+    }
 
-    const messages = await Message.find({ chatId })
-      .sort({ createdAt: 1 })
-      .limit(200)
-      .lean();
+    const messages = await Message.find({ chatId }).sort({ createdAt: 1 }).limit(200).lean();
 
     res.status(200).json({
       success: true,
@@ -212,6 +271,12 @@ export const sendChatMessage = async (req, res, next) => {
     }
 
     const chat = await loadChat(chatId, userId);
+    if (chat.status !== "accepted") {
+      const error = new Error("Chat request must be accepted before messaging");
+      error.statusCode = 403;
+      throw error;
+    }
+
     const recipient = chat.participants.find(
       (participant) => participant._id.toString() !== userId.toString()
     );
@@ -244,6 +309,8 @@ export const sendChatMessage = async (req, res, next) => {
     };
     await chat.save();
 
+    await emitChatUpdate(req, [userId, recipient._id], { type: "message_created", chatId: chat._id.toString() });
+
     res.status(201).json({
       success: true,
       data: {
@@ -266,17 +333,17 @@ export const markChatRead = async (req, res, next) => {
     const userId = req.user._id;
     const { chatId } = req.params;
 
-    await loadChat(chatId, userId);
+    const chat = await loadChat(chatId, userId);
+    if (chat.status !== "accepted") {
+      return res.status(200).json({ success: true, message: "No unread messages" });
+    }
 
     await Message.updateMany(
       { chatId, recipientId: userId, readAt: null },
       { $set: { readAt: new Date() } }
     );
 
-    res.status(200).json({
-      success: true,
-      message: "Messages marked as read"
-    });
+    res.status(200).json({ success: true, message: "Messages marked as read" });
   } catch (error) {
     next(error);
   }

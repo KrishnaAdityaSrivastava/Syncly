@@ -90,8 +90,14 @@ const io = new Server(httpServer, {
   },
 });
 
+app.set("io", io);
+
 io.on("connection", (socket) => {
   console.info("User connected:", socket.id);
+
+  socket.on("joinUser", (userId) => {
+    if (userId) socket.join(`user:${userId}`);
+  });
 
   socket.on("joinProject", (projectId) => {
     socket.join(projectId);

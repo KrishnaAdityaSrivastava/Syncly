@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { addTaskApi, upgradeTaskApi } from "../api/api";
-import Loading from "./loading.jsx";
-import { useNotification } from "./notificationContext.jsx";
-import { useTheme } from "./themeContext.jsx";
+import { addTaskApi, upgradeTaskApi } from "../../api/api";
+import Loading from "../common/loading.jsx";
+import { useNotification } from "../../context/notificationContext.jsx";
+import { useTheme } from "../../context/themeContext.jsx";
 
 const MainWorkspace = ({ stats, tasks, refreshDashboard }) => {
   const { darkMode } = useTheme();

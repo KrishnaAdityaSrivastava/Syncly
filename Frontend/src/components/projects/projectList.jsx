@@ -1,10 +1,11 @@
-import { useNavigate } from "react-router-dom";
-import { useNotification } from "../components/notificationContext.jsx";
-import Loading from "./loading.jsx";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useNotification } from "../../context/notificationContext.jsx";
+import Loading from "../common/loading.jsx";
 import { useState } from "react";
 
 const ProjectList = ({ projects, darkMode }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { showNotification } = useNotification();
   const [loading, setLoading] = useState(false);
 
@@ -36,11 +37,21 @@ const ProjectList = ({ projects, darkMode }) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-      {projects.map((p) => (
+      {projects.map((p) => {
+        const projectPath = `/projects/${p.projectId._id}`;
+        const isActiveProject = location.pathname === projectPath || location.pathname.startsWith(`${projectPath}/`);
+
+        return (
         <div
           key={p._id}
           onClick={() => openProject(p.projectId._id)}
           className={`rounded-xl border p-5 shadow-sm transition cursor-pointer group ${
+            isActiveProject
+              ? darkMode
+                ? "ring-2 ring-blue-400 border-blue-400 bg-gray-800"
+                : "ring-2 ring-blue-300 border-blue-500 bg-blue-50/40"
+              : ""
+          } ${
             darkMode
               ? "bg-gray-800 border-gray-700 hover:border-blue-400 hover:shadow-blue-500/10"
               : "bg-white border-gray-200 hover:border-blue-500 hover:shadow-blue-500/10"
@@ -62,7 +73,8 @@ const ProjectList = ({ projects, darkMode }) => {
             </span>
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

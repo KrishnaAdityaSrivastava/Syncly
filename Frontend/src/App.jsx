@@ -14,9 +14,10 @@ import ProjectSettings from "./pages/projectSettings.jsx";
 import AdminDashboard from "./pages/adminDashboard.jsx";
 import Messages from "./pages/messages.jsx";
 import Notifications from "./pages/notifications.jsx";
+import Reports from "./pages/reports.jsx";
 
-import { NotificationProvider } from "./components/notificationContext.jsx";
-import Layout from "./components/layout.jsx";
+import { NotificationProvider } from "./context/notificationContext.jsx";
+import Layout from "./components/layout/layout.jsx";
 
 function App() {
   return (
@@ -83,6 +84,14 @@ function App() {
           element={
             <Layout defaultActive="Notifications">
               <Notifications />
+            </Layout>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <Layout defaultActive="Reports">
+              <Reports />
             </Layout>
           }
         />

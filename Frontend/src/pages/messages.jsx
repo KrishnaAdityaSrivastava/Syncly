@@ -1,16 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createChatApi,
   getChatContactsApi,
   getChatMessagesApi,
   getChatsApi,
   markChatReadApi,
-  sendChatMessageApi
+  sendChatMessageApi,
+  updateChatRequestApi
 } from "../api/api";
-import { Search, SendHorizonal, MessageCircleMore, Sparkles } from "lucide-react";
-import { useTheme } from "../components/themeContext.jsx";
-import { useNotification } from "../components/notificationContext.jsx";
-import { useDashboard } from "../components/dashboardContext.jsx";
+import { Search, SendHorizonal, MessageCircleMore, Sparkles, Check, X } from "lucide-react";
+import { useTheme } from "../context/themeContext.jsx";
+import { useNotification } from "../context/notificationContext.jsx";
+import { useDashboard } from "../context/dashboardContext.jsx";
+import { socket } from "../socket.js";
 
 const formatTimestamp = (value) => new Date(value).toLocaleString();
 
@@ -19,9 +21,12 @@ const Messages = () => {
   const { showNotification } = useNotification();
   const { data } = useDashboard();
   const userId = data?.id;
+  const messagesEndRef = useRef(null);
 
   const [contacts, setContacts] = useState([]);
   const [chats, setChats] = useState([]);
+  const [incomingRequests, setIncomingRequests] = useState([]);
+  const [outgoingRequests, setOutgoingRequests] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [messageBody, setMessageBody] = useState("");
@@ -31,60 +36,61 @@ const Messages = () => {
 
   const selectedChatId = selectedChat?.id;
 
+  const getUserDisplayName = (user) => {
+    const name = user?.name?.trim();
+    const email = user?.email?.trim();
+    return name || email || "Unknown teammate";
+  };
+
   const selectedParticipant = useMemo(() => selectedChat?.participant || null, [selectedChat]);
+  const pendingContactIds = useMemo(() => new Set([...incomingRequests, ...outgoingRequests].map((request) => request.participant?.id)), [incomingRequests, outgoingRequests]);
 
   const filteredChats = useMemo(() => {
     if (!searchTerm.trim()) return chats;
     const query = searchTerm.toLowerCase();
-    return chats.filter((chat) => {
-      const haystack = `${chat.participant?.name || ""} ${chat.participant?.email || ""} ${chat.lastMessage?.text || ""}`.toLowerCase();
-      return haystack.includes(query);
-    });
+    return chats.filter((chat) => `${getUserDisplayName(chat.participant)} ${chat.participant?.email || ""} ${chat.lastMessage?.text || ""}`.toLowerCase().includes(query));
   }, [chats, searchTerm]);
 
   const filteredContacts = useMemo(() => {
     if (!searchTerm.trim()) return contacts;
     const query = searchTerm.toLowerCase();
-    return contacts.filter((contact) => `${contact.name} ${contact.email}`.toLowerCase().includes(query));
+    return contacts.filter((contact) => `${getUserDisplayName(contact)} ${contact.email}`.toLowerCase().includes(query));
   }, [contacts, searchTerm]);
 
-  const loadChats = async () => {
+  const loadChats = async ({ silent = false } = {}) => {
     try {
-      setLoadingChats(true);
-      const [chatData, contactData] = await Promise.all([
-        getChatsApi(),
-        getChatContactsApi()
-      ]);
-      setChats(chatData);
+      if (!silent) setLoadingChats(true);
+      const [chatState, contactData] = await Promise.all([getChatsApi(), getChatContactsApi()]);
+      setChats(chatState?.chats || []);
+      setIncomingRequests(chatState?.incomingRequests || []);
+      setOutgoingRequests(chatState?.outgoingRequests || []);
       setContacts(contactData);
+      setSelectedChat((prev) => {
+        if (!prev) return prev;
+        return (chatState?.chats || []).find((chat) => chat.id === prev.id) || null;
+      });
     } catch (error) {
-      showNotification(
-        error?.response?.data?.message || "Failed to load chats",
-        "error"
-      );
+      if (!silent) {
+        showNotification(error?.response?.data?.message || "Failed to load chats", "error");
+      }
     } finally {
-      setLoadingChats(false);
+      if (!silent) setLoadingChats(false);
     }
   };
 
-  const loadMessages = async (chatId) => {
+  const loadMessages = async (chatId, { silent = false } = {}) => {
     try {
-      setLoadingMessages(true);
+      if (!silent) setLoadingMessages(true);
       const data = await getChatMessagesApi(chatId);
       setMessages(data);
       await markChatReadApi(chatId);
-      setChats((prev) =>
-        prev.map((chat) =>
-          chat.id === chatId ? { ...chat, unreadCount: 0 } : chat
-        )
-      );
+      setChats((prev) => prev.map((chat) => (chat.id === chatId ? { ...chat, unreadCount: 0 } : chat)));
     } catch (error) {
-      showNotification(
-        error?.response?.data?.message || "Failed to load messages",
-        "error"
-      );
+      if (!silent) {
+        showNotification(error?.response?.data?.message || "Failed to load messages", "error");
+      }
     } finally {
-      setLoadingMessages(false);
+      if (!silent) setLoadingMessages(false);
     }
   };
 
@@ -93,255 +99,237 @@ const Messages = () => {
   }, []);
 
   useEffect(() => {
+    if (userId) {
+      socket.emit("joinUser", userId);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    const handleChatUpdate = () => {
+      loadChats({ silent: true });
+      if (selectedChatId) loadMessages(selectedChatId, { silent: true });
+    };
+
+    socket.on("chat:update", handleChatUpdate);
+    return () => socket.off("chat:update", handleChatUpdate);
+  }, [selectedChatId]);
+
+  useEffect(() => {
     if (selectedChatId) {
       loadMessages(selectedChatId);
     }
   }, [selectedChatId]);
 
-  const handleSelectChat = (chat) => {
-    setSelectedChat(chat);
-  };
+  useEffect(() => {
+    const chatsInterval = window.setInterval(() => loadChats({ silent: true }), 10000);
+    return () => window.clearInterval(chatsInterval);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedChatId) return undefined;
+    const messagesInterval = window.setInterval(() => {
+      loadMessages(selectedChatId, { silent: true });
+      loadChats({ silent: true });
+    }, 5000);
+    return () => window.clearInterval(messagesInterval);
+  }, [selectedChatId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages]);
+
+  const handleSelectChat = (chat) => setSelectedChat(chat);
 
   const handleStartChat = async (contactId) => {
     try {
-      const chat = await createChatApi(contactId);
-      setChats((prev) => {
-        const existing = prev.find((item) => item.id === chat.id);
-        if (existing) {
-          return prev.map((item) => (item.id === chat.id ? chat : item));
-        }
-        return [chat, ...prev];
-      });
-      setSelectedChat(chat);
+      await createChatApi(contactId);
+      showNotification("Chat request sent", "success");
+      loadChats({ silent: true });
     } catch (error) {
-      showNotification(
-        error?.response?.data?.message || "Failed to start chat",
-        "error"
-      );
+      showNotification(error?.response?.data?.message || "Failed to send chat request", "error");
+    }
+  };
+
+  const handleRequestUpdate = async (chatId, action) => {
+    try {
+      await updateChatRequestApi(chatId, action);
+      showNotification(action === "accept" ? "Chat request accepted" : "Chat request declined", "success");
+      loadChats({ silent: true });
+    } catch (error) {
+      showNotification(error?.response?.data?.message || `Failed to ${action} request`, "error");
     }
   };
 
   const handleSendMessage = async (event) => {
     event.preventDefault();
     if (!messageBody.trim() || !selectedChatId) return;
-
     try {
-      const message = await sendChatMessageApi(
-        selectedChatId,
-        messageBody.trim()
-      );
+      const message = await sendChatMessageApi(selectedChatId, messageBody.trim());
       setMessages((prev) => [...prev, message]);
       setMessageBody("");
-      setChats((prev) =>
-        prev.map((chat) =>
-          chat.id === selectedChatId
-            ? {
-                ...chat,
-                lastMessage: {
-                  text: message.body,
-                  sender: message.senderId,
-                  createdAt: message.createdAt
-                }
-              }
-            : chat
-        )
-      );
+      loadChats({ silent: true });
     } catch (error) {
-      showNotification(
-        error?.response?.data?.message || "Failed to send message",
-        "error"
-      );
+      showNotification(error?.response?.data?.message || "Failed to send message", "error");
     }
   };
 
   return (
-    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[360px_1fr]">
-      <aside
-        className={`overflow-hidden rounded-3xl border shadow-sm ${
-          darkMode ? "border-gray-700 bg-gray-800" : "border-blue-100 bg-white"
-        }`}
-      >
+    <div className="grid min-h-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+      <aside className={`flex min-h-0 min-w-0 flex-col overflow-hidden rounded-3xl border shadow-sm ${darkMode ? "border-gray-700 bg-gray-800" : "border-blue-100 bg-white"}`}>
         <div className={`border-b p-5 ${darkMode ? "border-gray-700" : "border-blue-100"}`}>
-          <div className="flex items-center justify-between gap-3">
-            <div>
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-500">Inbox</p>
-              <h2 className="mt-2 text-2xl font-semibold">Direct Messages</h2>
+              <h2 className="mt-2 break-words text-xl font-semibold">Direct Messages</h2>
             </div>
-            <div className={`rounded-2xl p-3 ${darkMode ? "bg-gray-900 text-blue-300" : "bg-blue-50 text-blue-600"}`}>
+            <div className={`shrink-0 rounded-2xl p-3 ${darkMode ? "bg-gray-900 text-blue-300" : "bg-blue-50 text-blue-600"}`}>
               <MessageCircleMore size={20} />
             </div>
           </div>
-
-          <div className={`mt-4 flex items-center gap-3 rounded-2xl border px-4 py-3 ${darkMode ? "border-gray-700 bg-gray-900" : "border-blue-100 bg-blue-50/70"}`}>
-            <Search size={18} className="text-gray-400" />
-            <input
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search chats or teammates"
-              className={`w-full bg-transparent text-sm outline-none ${darkMode ? "text-gray-100 placeholder:text-gray-500" : "text-gray-900 placeholder:text-gray-400"}`}
-            />
+          <div className={`mt-4 flex min-w-0 items-center gap-3 rounded-2xl border px-4 py-3 ${darkMode ? "border-gray-700 bg-gray-900" : "border-blue-100 bg-blue-50/70"}`}>
+            <Search size={18} className="shrink-0 text-gray-400" />
+            <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search chats or teammates" className={`min-w-0 flex-1 bg-transparent text-sm outline-none ${darkMode ? "text-gray-100 placeholder:text-gray-500" : "text-gray-900 placeholder:text-gray-400"}`} />
           </div>
         </div>
 
-        <div className="max-h-[720px] overflow-y-auto p-5 space-y-6">
-          <section>
-            <div className="mb-3 flex items-center justify-between">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-5">
+          {incomingRequests.length > 0 && (
+            <section className="min-w-0">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.25em] text-gray-500">Requests</h3>
+                <span className="text-xs text-gray-400">{incomingRequests.length}</span>
+              </div>
+              <div className="space-y-2">
+                {incomingRequests.map((request) => (
+                  <div key={request.id} className={`rounded-2xl border px-4 py-3 ${darkMode ? "border-gray-700 bg-gray-900" : "border-blue-100 bg-blue-50/40"}`}>
+                    <p className="font-medium">{getUserDisplayName(request.participant)}</p>
+                    <p className="mt-1 text-xs text-gray-500">{request.participant?.email}</p>
+                    <div className="mt-3 flex items-center gap-2">
+                      <button type="button" onClick={() => handleRequestUpdate(request.id, "accept")} className="inline-flex items-center gap-1 rounded-lg bg-blue-500 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-600">
+                        <Check size={14} /> Accept
+                      </button>
+                      <button type="button" onClick={() => handleRequestUpdate(request.id, "reject")} className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold ${darkMode ? "bg-gray-800 text-gray-200 hover:bg-gray-700" : "bg-white text-gray-700 hover:bg-gray-100"}`}>
+                        <X size={14} /> Decline
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="min-w-0">
+            <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
               <h3 className="text-xs font-semibold uppercase tracking-[0.25em] text-gray-500">Conversations</h3>
-              <span className="text-xs text-gray-400">{filteredChats.length}</span>
+              <span className="shrink-0 text-xs text-gray-400">{filteredChats.length}</span>
             </div>
             {loadingChats ? (
               <p className="text-sm text-gray-500">Loading chats...</p>
             ) : filteredChats.length === 0 ? (
-              <div className={`rounded-2xl border border-dashed p-4 text-sm ${darkMode ? "border-gray-700 text-gray-400" : "border-blue-100 text-gray-500"}`}>
-                No conversations found.
-              </div>
+              <div className={`rounded-2xl border border-dashed p-4 text-sm ${darkMode ? "border-gray-700 text-gray-400" : "border-blue-100 text-gray-500"}`}>No conversations found.</div>
             ) : (
               <div className="space-y-2">
                 {filteredChats.map((chat) => (
-                  <button
-                    key={chat.id}
-                    onClick={() => handleSelectChat(chat)}
-                    className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                      selectedChatId === chat.id
-                        ? darkMode
-                          ? "border-blue-400 bg-blue-500/10"
-                          : "border-blue-300 bg-blue-50"
-                        : darkMode
-                          ? "border-gray-700 bg-gray-900 hover:border-blue-400"
-                          : "border-blue-100 hover:border-blue-200 hover:bg-blue-50/70"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium">{chat.participant?.name || "Unknown teammate"}</p>
-                        <p className="mt-1 text-xs text-gray-500">{chat.participant?.email}</p>
+                  <button key={chat.id} onClick={() => handleSelectChat(chat)} className={`w-full min-w-0 rounded-2xl border px-4 py-3 text-left transition ${selectedChatId === chat.id ? (darkMode ? "border-blue-400 bg-blue-500/10" : "border-blue-300 bg-blue-50") : (darkMode ? "border-gray-700 bg-gray-900 hover:border-blue-400" : "border-blue-100 hover:border-blue-200 hover:bg-blue-50/70")}`}>
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words font-medium">{getUserDisplayName(chat.participant)}</p>
+                        <p className="mt-1 break-all text-xs text-gray-500">{chat.participant?.email}</p>
                       </div>
-                      {chat.unreadCount > 0 && (
-                        <span className="rounded-full bg-blue-500 px-2 py-0.5 text-xs font-semibold text-white">
-                          {chat.unreadCount}
-                        </span>
-                      )}
+                      {chat.unreadCount > 0 && <span className="shrink-0 rounded-full bg-blue-500 px-2 py-0.5 text-xs font-semibold text-white">{chat.unreadCount}</span>}
                     </div>
-                    <p className="mt-3 line-clamp-2 text-xs text-gray-500">{chat.lastMessage?.text || "No messages yet"}</p>
+                    <p className="mt-3 break-words text-xs text-gray-500">{chat.lastMessage?.text || "No messages yet"}</p>
                   </button>
                 ))}
               </div>
             )}
           </section>
 
-          <section>
-            <div className="mb-3 flex items-center justify-between">
+          <section className="min-w-0">
+            <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
               <h3 className="text-xs font-semibold uppercase tracking-[0.25em] text-gray-500">Start a chat</h3>
-              <Sparkles size={14} className="text-blue-500" />
+              <Sparkles size={14} className="shrink-0 text-blue-500" />
             </div>
             {filteredContacts.length === 0 ? (
-              <div className={`rounded-2xl border border-dashed p-4 text-sm ${darkMode ? "border-gray-700 text-gray-400" : "border-blue-100 text-gray-500"}`}>
-                No teammates available.
-              </div>
+              <div className={`rounded-2xl border border-dashed p-4 text-sm ${darkMode ? "border-gray-700 text-gray-400" : "border-blue-100 text-gray-500"}`}>No teammates available.</div>
             ) : (
               <div className="space-y-2">
-                {filteredContacts.map((contact) => (
-                  <button
-                    key={contact.id}
-                    onClick={() => handleStartChat(contact.id)}
-                    className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm transition ${
-                      darkMode
-                        ? "border-gray-700 bg-gray-900 hover:border-blue-400"
-                        : "border-blue-100 hover:border-blue-200 hover:bg-blue-50/70"
-                    }`}
-                  >
-                    <div>
-                      <p className="font-medium">{contact.name}</p>
-                      <p className="text-xs text-gray-500">{contact.email}</p>
-                    </div>
-                    <span className="text-xs font-semibold text-blue-500">Message</span>
-                  </button>
-                ))}
+                {filteredContacts.map((contact) => {
+                  const hasPendingRequest = pendingContactIds.has(contact.id);
+                  return (
+                    <button key={contact.id} onClick={() => !hasPendingRequest && handleStartChat(contact.id)} disabled={hasPendingRequest} className={`flex w-full min-w-0 items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition ${darkMode ? "border-gray-700 bg-gray-900 hover:border-blue-400" : "border-blue-100 hover:border-blue-200 hover:bg-blue-50/70"} ${hasPendingRequest ? "opacity-70" : ""}`}>
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words font-medium">{getUserDisplayName(contact)}</p>
+                        <p className="break-all text-xs text-gray-500">{contact.email}</p>
+                      </div>
+                      <span className="shrink-0 text-xs font-semibold text-blue-500">{hasPendingRequest ? "Pending" : "Request"}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </section>
+
+          {outgoingRequests.length > 0 && (
+            <section className="min-w-0">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.25em] text-gray-500">Sent requests</h3>
+                <span className="text-xs text-gray-400">{outgoingRequests.length}</span>
+              </div>
+              <div className="space-y-2">
+                {outgoingRequests.map((request) => (
+                  <div key={request.id} className={`rounded-2xl border px-4 py-3 text-sm ${darkMode ? "border-gray-700 bg-gray-900 text-gray-300" : "border-blue-100 bg-blue-50/40 text-gray-600"}`}>
+                    Waiting for {getUserDisplayName(request.participant)}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </aside>
 
-      <section
-        className={`overflow-hidden rounded-3xl border shadow-sm ${
-          darkMode ? "border-gray-700 bg-gray-800" : "border-blue-100 bg-white"
-        }`}
-      >
-        <div className={`border-b px-6 py-5 ${darkMode ? "border-gray-700" : "border-blue-100"}`}>
-          <h2 className="text-xl font-semibold">
-            {selectedParticipant?.name || "Select a conversation"}
-          </h2>
-          {selectedParticipant?.email ? (
-            <p className="mt-1 text-sm text-gray-500">{selectedParticipant.email}</p>
-          ) : (
-            <p className="mt-1 text-sm text-gray-500">Pick a teammate from the left to start collaborating.</p>
-          )}
+      <section className={`flex min-h-[calc(100vh-12rem)] min-w-0 flex-col overflow-hidden rounded-3xl border shadow-sm ${darkMode ? "border-gray-700 bg-gray-800" : "border-blue-100 bg-white"}`}>
+        <div className={`min-w-0 border-b px-6 py-5 ${darkMode ? "border-gray-700" : "border-blue-100"}`}>
+          <h2 className="break-words text-xl font-semibold">{selectedParticipant ? getUserDisplayName(selectedParticipant) : "Select a conversation"}</h2>
+          {selectedParticipant?.email ? <p className="mt-1 break-all text-sm text-gray-500">{selectedParticipant.email}</p> : <p className="mt-1 text-sm text-gray-500">Accepted chats appear here.</p>}
         </div>
 
-        <div className={`flex min-h-[720px] flex-col ${darkMode ? "bg-gray-850" : "bg-slate-50/50"}`}>
-          <div className="flex-1 space-y-4 overflow-y-auto px-6 py-6">
+        <div className={`flex min-h-0 flex-1 flex-col ${darkMode ? "bg-gray-850" : "bg-slate-50/50"}`}>
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 sm:px-6">
             {!selectedChatId ? (
-              <div className="flex h-full min-h-[520px] items-center justify-center">
+              <div className="flex min-h-[320px] flex-1 items-center justify-center">
                 <div className={`max-w-md rounded-3xl border p-8 text-center ${darkMode ? "border-gray-700 bg-gray-900" : "border-blue-100 bg-white"}`}>
                   <MessageCircleMore size={28} className="mx-auto text-blue-500" />
-                  <h3 className="mt-4 text-lg font-semibold">Your team conversations live here</h3>
-                  <p className="mt-2 text-sm text-gray-500">Open an existing chat or start a new one to keep work moving like a mini Jira workspace.</p>
+                  <h3 className="mt-4 break-words text-lg font-semibold">Accepted chats appear here</h3>
+                  <p className="mt-2 break-words text-sm text-gray-500">Send a request or open an accepted conversation.</p>
                 </div>
               </div>
             ) : loadingMessages ? (
               <p className="text-sm text-gray-500">Loading messages...</p>
             ) : messages.length === 0 ? (
-              <div className="flex h-full min-h-[520px] items-center justify-center text-sm text-gray-500">
-                No messages yet. Kick things off with the first update.
-              </div>
+              <div className="flex min-h-[320px] flex-1 items-center justify-center text-sm text-gray-500">No messages yet.</div>
             ) : (
-              messages.map((message) => {
-                const isSender = message.senderId === userId;
-                return (
-                  <div
-                    key={message.id}
-                    className={`flex ${isSender ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[75%] rounded-3xl px-4 py-3 shadow-sm ${
-                        isSender
-                          ? "bg-blue-500 text-white"
-                          : darkMode
-                            ? "bg-gray-900 text-gray-100"
-                            : "bg-white text-gray-800"
-                      }`}
-                    >
-                      <p className="whitespace-pre-wrap text-sm leading-6">{message.body}</p>
-                      <p className={`mt-2 text-[11px] ${isSender ? "text-blue-100" : "text-gray-400"}`}>
-                        {formatTimestamp(message.createdAt)}
-                      </p>
+              <div className="space-y-4">
+                {messages.map((message) => {
+                  const isSender = message.senderId === userId;
+                  return (
+                    <div key={message.id} className={`flex min-w-0 ${isSender ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-full rounded-3xl px-4 py-3 shadow-sm sm:max-w-[75%] ${isSender ? "bg-blue-500 text-white" : darkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-800"}`}>
+                        <p className="break-words whitespace-pre-wrap text-sm leading-6">{message.body}</p>
+                        <p className={`mt-2 break-words text-[11px] ${isSender ? "text-blue-100" : "text-gray-400"}`}>{formatTimestamp(message.createdAt)}</p>
+                      </div>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </div>
             )}
           </div>
 
-          <form onSubmit={handleSendMessage} className={`border-t px-6 py-5 ${darkMode ? "border-gray-700 bg-gray-800" : "border-blue-100 bg-white"}`}>
-            <div className={`flex items-end gap-3 rounded-3xl border p-3 ${darkMode ? "border-gray-700 bg-gray-900" : "border-blue-100 bg-slate-50"}`}>
-              <textarea
-                value={messageBody}
-                onChange={(event) => setMessageBody(event.target.value)}
-                placeholder={selectedChatId ? "Share an update, blocker, or next step..." : "Select a chat first"}
-                disabled={!selectedChatId}
-                rows={1}
-                className={`max-h-36 min-h-[52px] flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none ${darkMode ? "text-gray-100 placeholder:text-gray-500" : "text-gray-900 placeholder:text-gray-400"}`}
-              />
-              <button
-                type="submit"
-                disabled={!selectedChatId || !messageBody.trim()}
-                className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl text-white transition ${
-                  !selectedChatId || !messageBody.trim()
-                    ? "bg-gray-400"
-                    : "bg-blue-500 hover:bg-blue-600"
-                }`}
-              >
+          <form onSubmit={handleSendMessage} className={`border-t px-4 py-5 sm:px-6 ${darkMode ? "border-gray-700 bg-gray-800" : "border-blue-100 bg-white"}`}>
+            <div className={`flex min-w-0 items-end gap-3 rounded-3xl border p-3 ${darkMode ? "border-gray-700 bg-gray-900" : "border-blue-100 bg-slate-50"}`}>
+              <textarea value={messageBody} onChange={(event) => setMessageBody(event.target.value)} placeholder={selectedChatId ? "Write a message..." : "Select an accepted chat first"} disabled={!selectedChatId} rows={1} className={`max-h-36 min-h-[52px] min-w-0 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none ${darkMode ? "text-gray-100 placeholder:text-gray-500" : "text-gray-900 placeholder:text-gray-400"}`} />
+              <button type="submit" disabled={!selectedChatId || !messageBody.trim()} className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white transition ${!selectedChatId || !messageBody.trim() ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"}`}>
                 <SendHorizonal size={18} />
               </button>
             </div>

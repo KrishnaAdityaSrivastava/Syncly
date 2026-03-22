@@ -227,6 +227,13 @@ export const addProjectMemberApi = async (projectId, data) => {
   return res.data;
 };
 
+export const removeProjectMemberApi = async (projectId, userId) => {
+  const res = await api.delete(`/projects/${projectId}/members`, {
+    data: { userId }
+  });
+  return res.data;
+};
+
 export const sendProjectInviteApi = async (projectId, email) => {
   const res = await api.post(`/invites/${projectId}/invite`, { email });
   return res.data;
@@ -310,6 +317,11 @@ export const getChatsApi = async () => {
 
 export const createChatApi = async (recipientId) => {
   const res = await api.post("/chats", { recipientId });
+  return res.data.data;
+};
+
+export const updateChatRequestApi = async (chatId, action) => {
+  const res = await api.patch(`/chats/${chatId}/request`, { action });
   return res.data.data;
 };
 

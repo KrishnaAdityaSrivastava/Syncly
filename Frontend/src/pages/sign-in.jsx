@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { signInApi } from "../api/api";
-import { useNotification } from "../components/notificationContext.jsx";
-import Loading from "../components/loading.jsx";
+import { useNotification } from "../context/notificationContext.jsx";
+import Loading from "../components/common/loading.jsx";
 import { Eye, EyeOff } from "lucide-react";
 
 const SignInForm = () => {

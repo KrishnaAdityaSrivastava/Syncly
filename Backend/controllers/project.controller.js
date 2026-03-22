@@ -8,7 +8,7 @@ export const getUserProjects = async (req, res, next) => {
   try {
     const userId = req.user._id;
     const projects = await ProjectMember.find({ userId })
-      .populate("projectId", "name description")
+      .populate("projectId", "name description createdAt updatedAt")
       .lean();
 
     if (projects.length == 0) {

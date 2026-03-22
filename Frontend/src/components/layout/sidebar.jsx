@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { LayoutDashboard, FolderKanban, BarChart3, Settings, LogOut, Menu, MessageSquare, Bell } from "lucide-react";
 import { useLocation } from "react-router-dom";
-import { signOutApi } from "../api/api";
-import { useTheme } from "./themeContext.jsx";
-import { useNotification } from "./notificationContext.jsx";
+import { signOutApi } from "../../api/api";
+import { useTheme } from "../../context/themeContext.jsx";
+import { useNotification } from "../../context/notificationContext.jsx";
 
-const Sidebar = ({ setLoading, navigate, userRole }) => {
+const Sidebar = ({ navigate, userRole }) => {
   const { darkMode } = useTheme();
   const { showNotification } = useNotification();
   const location = useLocation();
@@ -25,42 +25,42 @@ const Sidebar = ({ setLoading, navigate, userRole }) => {
 
   return (
     <aside
-      className={`transition-all duration-300 ${collapsed ? "w-20" : "w-64"} flex flex-col border-r h-screen ${
+      className={`flex h-full min-h-0 w-full flex-col border-b transition-all duration-300 lg:border-b-0 lg:border-r ${collapsed ? "lg:w-20" : "lg:w-64"} ${
         darkMode ? "bg-gray-900 border-gray-700" : "bg-blue-50 border-blue-200 shadow-sm"
       }`}
     >
-      {/* Logo + collapse button */}
-      <div className={`flex items-center justify-between p-6 border-b ${darkMode ? "border-gray-700" : "border-blue-200"}`}>
-        <span className={`text-2xl font-bold tracking-wide ${darkMode ? "text-blue-400" : "text-blue-700"} ${collapsed ? "hidden" : "block"}`}>
+      <div className={`flex items-center justify-between gap-3 border-b p-4 sm:p-6 ${darkMode ? "border-gray-700" : "border-blue-200"}`}>
+        <span className={`min-w-0 break-words text-2xl font-bold tracking-wide ${darkMode ? "text-blue-400" : "text-blue-700"} ${collapsed ? "lg:hidden" : "block"}`}>
           SYNCLY
         </span>
         <Menu
           size={20}
-          className={`cursor-pointer ${darkMode ? "text-blue-400" : "text-blue-700"}`}
+          className={`shrink-0 cursor-pointer ${darkMode ? "text-blue-400" : "text-blue-700"}`}
           onClick={() => setCollapsed(!collapsed)}
         />
       </div>
 
-      {/* Navigation Links */}
-      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+      <nav className="flex-1 overflow-y-auto p-4 space-y-1 min-h-0">
         {navItems.map(({ label, icon: Icon, path }) => {
-          const isActive = location.pathname === path;
+          const isActive = path === "/projects"
+            ? location.pathname.startsWith("/projects")
+            : location.pathname === path || location.pathname.startsWith(`${path}/`);
           return (
             <button
               key={label}
               onClick={() => navigate(path)}
-              className={`group relative flex items-center w-full px-4 py-2 rounded-lg transition-colors font-medium overflow-hidden ${
+              className={`group relative flex w-full min-w-0 items-center rounded-lg px-4 py-2 font-medium overflow-hidden transition-colors ${
                 isActive
                   ? darkMode
-                  ? "bg-blue-600 text-white"
+                    ? "bg-blue-600 text-white"
                     : "bg-blue-500 text-white"
                   : darkMode
-                  ? "text-gray-400 hover:bg-gray-800 hover:text-blue-400"
-                  : "text-gray-700 hover:bg-blue-100 hover:text-blue-700"
+                    ? "text-gray-400 hover:bg-gray-800 hover:text-blue-400"
+                    : "text-gray-700 hover:bg-blue-100 hover:text-blue-700"
               }`}
             >
-              <Icon size={20} className="mr-3 flex-shrink-0" />
-              <span className={`${collapsed ? "hidden" : "block"} transition-all duration-300`}>{label}</span>
+              <Icon size={20} className="mr-3 shrink-0" />
+              <span className={`${collapsed ? "lg:hidden" : "block"} min-w-0 truncate transition-all duration-300`}>{label}</span>
 
               {isActive && (
                 <span
@@ -77,12 +77,14 @@ const Sidebar = ({ setLoading, navigate, userRole }) => {
           <div className="pt-4">
             <p className="px-4 text-xs uppercase tracking-wide text-gray-500">Admin</p>
             {adminItems.map(({ label, icon: Icon, path }) => {
-              const isActive = location.pathname === path;
+              const isActive = path === "/projects"
+              ? location.pathname.startsWith("/projects")
+              : location.pathname === path || location.pathname.startsWith(`${path}/`);
               return (
                 <button
                   key={label}
                   onClick={() => navigate(path)}
-                  className={`group relative mt-2 flex items-center w-full px-4 py-2 rounded-lg transition-colors font-medium overflow-hidden ${
+                  className={`group relative mt-2 flex w-full min-w-0 items-center rounded-lg px-4 py-2 font-medium overflow-hidden transition-colors ${
                     isActive
                       ? darkMode
                         ? "bg-blue-600 text-white"
@@ -92,8 +94,8 @@ const Sidebar = ({ setLoading, navigate, userRole }) => {
                         : "text-gray-700 hover:bg-blue-100 hover:text-blue-700"
                   }`}
                 >
-                  <Icon size={20} className="mr-3 flex-shrink-0" />
-                  <span className={`${collapsed ? "hidden" : "block"} transition-all duration-300`}>{label}</span>
+                  <Icon size={20} className="mr-3 shrink-0" />
+                  <span className={`${collapsed ? "lg:hidden" : "block"} min-w-0 truncate transition-all duration-300`}>{label}</span>
                 </button>
               );
             })}
@@ -101,10 +103,9 @@ const Sidebar = ({ setLoading, navigate, userRole }) => {
         )}
       </nav>
 
-      {/* Logout Button */}
-      <div className={`p-4 border-t ${darkMode ? "border-gray-700" : "border-blue-200"}`}>
+      <div className={`border-t p-4 ${darkMode ? "border-gray-700" : "border-blue-200"}`}>
         <button
-          className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-lg transition ${
+          className={`flex w-full min-w-0 items-center rounded-lg px-3 py-2 text-sm font-medium transition ${
             darkMode ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-blue-500 text-white hover:bg-blue-600"
           }`}
           onClick={async () => {
@@ -121,8 +122,8 @@ const Sidebar = ({ setLoading, navigate, userRole }) => {
             }
           }}
         >
-          <LogOut size={16} className="mr-2" />
-          <span className={`${collapsed ? "hidden" : "block"}`}>Logout</span>
+          <LogOut size={16} className="mr-2 shrink-0" />
+          <span className={`${collapsed ? "lg:hidden" : "block"} min-w-0 truncate`}>Logout</span>
         </button>
       </div>
     </aside>

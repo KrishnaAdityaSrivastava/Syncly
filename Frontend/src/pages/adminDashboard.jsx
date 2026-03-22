@@ -6,9 +6,9 @@ import {
   getAdminProjectsApi,
   getAdminInvitesApi
 } from "../api/api.js";
-import Loading from "../components/loading.jsx";
-import { useNotification } from "../components/notificationContext.jsx";
-import { useTheme } from "../components/themeContext.jsx";
+import Loading from "../components/common/loading.jsx";
+import { useNotification } from "../context/notificationContext.jsx";
+import { useTheme } from "../context/themeContext.jsx";
 
 const AdminDashboard = () => {
   const { darkMode } = useTheme();
@@ -19,6 +19,12 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [invites, setInvites] = useState([]);
+
+  const getUserDisplayName = (user) => {
+    const name = user?.name?.trim();
+    const email = user?.email?.trim();
+    return name || email || "Unknown user";
+  };
 
   const loadAdminData = async () => {
     try {
@@ -62,8 +68,6 @@ const AdminDashboard = () => {
 
   return (
     <div className={`min-h-screen ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
-      <h1 className="text-2xl font-semibold mb-6">Admin Dashboard</h1>
-
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {[{ label: "Users", value: stats.users },
           { label: "Projects", value: stats.projects },
@@ -83,7 +87,7 @@ const AdminDashboard = () => {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <section className={`rounded-xl border p-6 shadow-sm ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          <h2 className="text-lg font-semibold mb-4">Server Health</h2>
+          <h2 className="text-xl font-semibold mb-4">Server Health</h2>
           <div className="space-y-2 text-sm text-gray-400">
             <p>Status: <span className="text-gray-200">{health.status}</span></p>
             <p>Uptime: <span className="text-gray-200">{Math.round(health.uptime)}s</span></p>
@@ -92,7 +96,7 @@ const AdminDashboard = () => {
         </section>
 
         <section className={`rounded-xl border p-6 shadow-sm ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          <h2 className="text-lg font-semibold mb-4">Project Overview</h2>
+          <h2 className="text-xl font-semibold mb-4">Project Overview</h2>
           <div className="space-y-3">
             {projects.slice(0, 5).map((project) => (
               <div key={project._id} className={`rounded-lg px-4 py-3 ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>
@@ -109,11 +113,11 @@ const AdminDashboard = () => {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <section className={`rounded-xl border p-6 shadow-sm ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          <h2 className="text-lg font-semibold mb-4">Users</h2>
+          <h2 className="text-xl font-semibold mb-4">Users</h2>
           <div className="space-y-3">
             {users.slice(0, 6).map((user) => (
               <div key={user._id} className={`rounded-lg px-4 py-3 ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>
-                <p className="font-medium">{user.name}</p>
+                <p className="font-medium">{getUserDisplayName(user)}</p>
                 <p className="text-xs text-gray-400">{user.email}</p>
                 <p className="text-xs text-gray-400">Role: {user.role} · Status: {user.status}</p>
               </div>
@@ -123,7 +127,7 @@ const AdminDashboard = () => {
         </section>
 
         <section className={`rounded-xl border p-6 shadow-sm ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          <h2 className="text-lg font-semibold mb-4">Invites</h2>
+          <h2 className="text-xl font-semibold mb-4">Invites</h2>
           <div className="space-y-3">
             {invites.slice(0, 6).map((invite) => (
               <div key={invite._id} className={`rounded-lg px-4 py-3 ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>

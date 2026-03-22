@@ -1,4 +1,3 @@
-// context/dashboardContext.jsx
 import { createContext, useContext } from "react";
 
 const DashboardContext = createContext(null);

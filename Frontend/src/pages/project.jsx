@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getUserProjectsApi, createProjectApi } from "../api/api.js";
-import ProjectList from "../components/projectList.jsx";
-import Loading from "../components/loading.jsx";
-import { useNotification } from "../components/notificationContext.jsx";
-import { useTheme } from "../components/themeContext.jsx";
+import ProjectList from "../components/projects/projectList.jsx";
+import Loading from "../components/common/loading.jsx";
+import { useNotification } from "../context/notificationContext.jsx";
+import { useTheme } from "../context/themeContext.jsx";
 
 const Projects = () => {
   const { darkMode } = useTheme();
@@ -15,6 +15,17 @@ const Projects = () => {
   const [showModal, setShowModal] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
+
+  const sortedProjects = useMemo(() => {
+    const getProjectTimestamp = (project) => {
+      const projectMeta = project?.projectId || {};
+      const candidate = projectMeta.updatedAt || projectMeta.createdAt || project.updatedAt || project.createdAt;
+      const parsed = candidate ? new Date(candidate).getTime() : 0;
+      return Number.isNaN(parsed) ? 0 : parsed;
+    };
+
+    return [...projects].sort((a, b) => getProjectTimestamp(b) - getProjectTimestamp(a));
+  }, [projects]);
 
   // Fetch projects
   const fetchProjects = async () => {
@@ -80,10 +91,8 @@ const Projects = () => {
 
   return (
     <div className="w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Projects</h1>
-
+      {/* Header actions */}
+      <div className="mb-6 flex items-center justify-end">
         {/* Create Project Button */}
         <button
           onClick={() => setShowModal(true)}
@@ -97,7 +106,7 @@ const Projects = () => {
       {loading ? (
         <Loading variant="inline" text="Loading Project List..." />
       ) : (
-        <ProjectList projects={projects} darkMode={darkMode} />
+        <ProjectList projects={sortedProjects} darkMode={darkMode} />
       )}
 
       {/* Modal */}

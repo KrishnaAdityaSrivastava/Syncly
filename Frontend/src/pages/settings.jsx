@@ -5,9 +5,9 @@ import {
   updateUserPasswordApi,
   updateUserNotificationsApi
 } from "../api/api.js";
-import Loading from "../components/loading.jsx";
-import { useNotification } from "../components/notificationContext.jsx";
-import { useTheme } from "../components/themeContext.jsx";
+import Loading from "../components/common/loading.jsx";
+import { useNotification } from "../context/notificationContext.jsx";
+import { useTheme } from "../context/themeContext.jsx";
 
 const Settings = () => {
   const { darkMode } = useTheme();
@@ -102,11 +102,9 @@ const Settings = () => {
 
   return (
     <div className={`min-h-screen ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
-      <h1 className="text-2xl font-semibold mb-6">Settings</h1>
-
       <div className="space-y-6">
         <section className={`rounded-xl border p-6 shadow-sm ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          <h2 className="text-lg font-semibold mb-4">Profile</h2>
+          <h2 className="text-xl font-semibold mb-4">Profile</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="text-sm text-gray-400">Name</label>
@@ -147,7 +145,7 @@ const Settings = () => {
         </section>
 
         <section className={`rounded-xl border p-6 shadow-sm ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          <h2 className="text-lg font-semibold mb-4">Password</h2>
+          <h2 className="text-xl font-semibold mb-4">Password</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="text-sm text-gray-400">Current Password</label>
@@ -188,7 +186,7 @@ const Settings = () => {
         </section>
 
         <section className={`rounded-xl border p-6 shadow-sm ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          <h2 className="text-lg font-semibold mb-4">Notifications</h2>
+          <h2 className="text-xl font-semibold mb-4">Notifications</h2>
           <div className="space-y-3">
             <label className="flex items-center justify-between gap-4">
               <span className="text-sm text-gray-400">Email notifications</span>

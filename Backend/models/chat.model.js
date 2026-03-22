@@ -15,6 +15,21 @@ const chatSchema = new mongoose.Schema(
       unique: true,
       index: true
     },
+    status: {
+      type: String,
+      enum: ["pending", "accepted", "rejected"],
+      default: "pending",
+      index: true
+    },
+    requestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+    acceptedAt: {
+      type: Date,
+      default: null
+    },
     lastMessage: {
       text: { type: String, default: "" },
       sender: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },

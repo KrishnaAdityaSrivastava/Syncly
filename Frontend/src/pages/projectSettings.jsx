@@ -4,16 +4,20 @@ import {
   getUserProjectApi,
   getProjectMembersApi,
   updateProjectSettingsApi,
-  addProjectMemberApi
+  addProjectMemberApi,
+  removeProjectMemberApi
 } from "../api/api.js";
-import Loading from "../components/loading.jsx";
-import { useNotification } from "../components/notificationContext.jsx";
-import { useTheme } from "../components/themeContext.jsx";
+import Loading from "../components/common/loading.jsx";
+import { useNotification } from "../context/notificationContext.jsx";
+import { useTheme } from "../context/themeContext.jsx";
+import { useDashboard } from "../context/dashboardContext.jsx";
+import { Trash2 } from "lucide-react";
 
 const ProjectSettings = () => {
   const { projectId } = useParams();
   const { darkMode } = useTheme();
   const { showNotification } = useNotification();
+  const { data: dashboardData } = useDashboard();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [project, setProject] = useState(null);
@@ -22,6 +26,27 @@ const ProjectSettings = () => {
   const [description, setDescription] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [role, setRole] = useState("member");
+  const [removingMemberId, setRemovingMemberId] = useState("");
+
+  const getUserDisplayName = (user) => {
+    const name = user?.name?.trim();
+    const email = user?.email?.trim();
+    return name || email || "Unknown user";
+  };
+
+  const getRoleLabel = (value = "") => {
+    const labels = {
+      admin: "Admin",
+      manager: "Manager",
+      member: "Member",
+      viewer: "Viewer"
+    };
+
+    return labels[value] || (value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : "Member");
+  };
+
+  const currentUserId = dashboardData?.id;
+  const canManageMembers = project?.role === "admin";
 
   const loadSettings = async () => {
     try {
@@ -89,6 +114,24 @@ const ProjectSettings = () => {
     }
   };
 
+  const handleRemoveMember = async (member) => {
+    if (!canManageMembers) {
+      showNotification("You are not allowed to remove members", "error");
+      return;
+    }
+
+    try {
+      setRemovingMemberId(member._id);
+      await removeProjectMemberApi(projectId, member.userId?._id);
+      setMembers((prev) => prev.filter((item) => item._id !== member._id));
+      showNotification("Member removed", "success");
+    } catch (err) {
+      showNotification(err?.response?.data?.error || err?.response?.data?.message || "Failed to remove member", "error");
+    } finally {
+      setRemovingMemberId("");
+    }
+  };
+
   if (loading) return <Loading variant="inline" text="Loading project settings..." />;
   if (!project) return (
     <div
@@ -104,11 +147,9 @@ const ProjectSettings = () => {
 
   return (
     <div className={`min-h-screen ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
-      <h1 className="text-2xl font-semibold mb-6">Project Settings</h1>
-
       <div className="space-y-6">
         <section className={`rounded-xl border p-6 shadow-sm ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          <h2 className="text-lg font-semibold mb-4">Project Details</h2>
+          <h2 className="text-xl font-semibold mb-4">Project Details</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="text-sm text-gray-400">Name</label>
@@ -149,7 +190,7 @@ const ProjectSettings = () => {
         </section>
 
         <section className={`rounded-xl border p-6 shadow-sm ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          <h2 className="text-lg font-semibold mb-4">Members & Roles</h2>
+          <h2 className="text-xl font-semibold mb-4">Members & Roles</h2>
           <div className="grid gap-4 md:grid-cols-3">
             <input
               type="email"
@@ -188,15 +229,35 @@ const ProjectSettings = () => {
             {members.map((member) => (
               <div
                 key={member._id}
-                className={`flex items-center justify-between rounded-lg px-4 py-2 ${
+                className={`flex items-center justify-between gap-3 rounded-lg px-4 py-2 ${
                   darkMode ? "bg-gray-700" : "bg-gray-100"
                 }`}
               >
-                <div>
-                  <p className="font-medium">{member.userId?.name}</p>
-                  <p className="text-xs opacity-70">{member.userId?.email}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{getUserDisplayName(member.userId)}</p>
                 </div>
-                <span className="text-sm capitalize">{member.role}</span>
+                <div className="flex items-center gap-2">
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                    darkMode ? "bg-gray-800 text-blue-200" : "bg-white text-blue-700"
+                  }`}>
+                    {getRoleLabel(member.role)}
+                  </span>
+                  {canManageMembers && member.userId?._id !== currentUserId && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveMember(member)}
+                      disabled={removingMemberId === member._id}
+                      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition disabled:opacity-50 ${
+                        darkMode
+                          ? "bg-red-500/15 text-red-200 hover:bg-red-500/25"
+                          : "bg-red-100 text-red-700 hover:bg-red-200"
+                      }`}
+                    >
+                      <Trash2 size={14} />
+                      {removingMemberId === member._id ? "Removing..." : "Remove"}
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
             {members.length === 0 && (

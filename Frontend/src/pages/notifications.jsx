@@ -4,8 +4,8 @@ import {
   markAllNotificationsReadApi,
   markNotificationReadApi
 } from "../api/api";
-import { useTheme } from "../components/themeContext.jsx";
-import { useNotification } from "../components/notificationContext.jsx";
+import { useTheme } from "../context/themeContext.jsx";
+import { useNotification } from "../context/notificationContext.jsx";
 
 const Notifications = () => {
   const { darkMode } = useTheme();
@@ -68,14 +68,11 @@ const Notifications = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold text-blue-500">Notifications</h2>
-          <p className="text-sm text-gray-500">
-            {unreadCount > 0
-              ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
-              : "You're all caught up."}
-          </p>
-        </div>
+        <p className="text-sm text-gray-500">
+          {unreadCount > 0
+            ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
+            : "No unread notifications."}
+        </p>
         <button
           onClick={handleMarkAllRead}
           disabled={unreadCount === 0}
