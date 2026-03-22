@@ -5,8 +5,11 @@ import { sendOtpApi, signUpApi, verifyOtpApi } from "../api/api";
 import { useNotification } from "../components/notificationContext.jsx";
 import Loading from "../components/loading.jsx";
 
+const emailVerificationRequired =
+  String(import.meta.env.VITE_EMAIL_VERIFICATION_REQUIRED ?? "true").toLowerCase() !== "false";
+
 const SignUpForm = () => {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(emailVerificationRequired ? 1 : 3);
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -101,7 +104,13 @@ const SignUpForm = () => {
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-2xl shadow-xl">
         <h2 className="text-3xl font-bold text-center text-gray-900">Sign Up</h2>
 
-        {step === 1 && (
+        {!emailVerificationRequired && (
+          <p className="rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            Email verification is disabled in this environment. You can create your account directly.
+          </p>
+        )}
+
+        {emailVerificationRequired && step === 1 && (
           <form className="space-y-5" onSubmit={handleSendOtp}>
             <div>
               <input
@@ -124,7 +133,7 @@ const SignUpForm = () => {
           </form>
         )}
 
-        {step === 2 && (
+        {emailVerificationRequired && step === 2 && (
           <form className="space-y-5" onSubmit={handleVerifyOtp}>
             <input type="hidden" {...register("email")} value={email} readOnly />
 
@@ -162,6 +171,16 @@ const SignUpForm = () => {
 
         {step === 3 && (
           <form className="space-y-5" onSubmit={handleSignUp}>
+            <div>
+              <input
+                {...register("email", { required: "Email is required" })}
+                type="email"
+                placeholder="Email"
+                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+              {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+            </div>
+
             <div>
               <input
                 {...register("name", { required: "Name is required" })}
@@ -209,7 +228,7 @@ const SignUpForm = () => {
           </form>
         )}
 
-        {step !== 3 && (
+        {(emailVerificationRequired ? step !== 3 : true) && (
           <p className="text-sm text-center text-gray-600">
             Already have an account?
             <a href="/signin" className="text-blue-600 hover:underline"> Sign in</a>
