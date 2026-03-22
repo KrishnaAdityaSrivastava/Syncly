@@ -28,7 +28,9 @@
     "morgan": "~1.9.1",
     "nodemailer": "^7.0.6",
     "resend": "^6.9.4",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "mailgun.js": "^11.1.0",
+    "form-data": "^4.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
