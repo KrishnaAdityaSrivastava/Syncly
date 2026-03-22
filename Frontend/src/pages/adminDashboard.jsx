@@ -20,6 +20,12 @@ const AdminDashboard = () => {
   const [projects, setProjects] = useState([]);
   const [invites, setInvites] = useState([]);
 
+  const getUserDisplayName = (user) => {
+    const name = user?.name?.trim();
+    const email = user?.email?.trim();
+    return name || email || "Unknown user";
+  };
+
   const loadAdminData = async () => {
     try {
       const [healthData, statsData, usersData, projectsData, invitesData] = await Promise.all([
@@ -113,7 +119,7 @@ const AdminDashboard = () => {
           <div className="space-y-3">
             {users.slice(0, 6).map((user) => (
               <div key={user._id} className={`rounded-lg px-4 py-3 ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>
-                <p className="font-medium">{user.name}</p>
+                <p className="font-medium">{getUserDisplayName(user)}</p>
                 <p className="text-xs text-gray-400">{user.email}</p>
                 <p className="text-xs text-gray-400">Role: {user.role} · Status: {user.status}</p>
               </div>

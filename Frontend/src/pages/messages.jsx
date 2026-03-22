@@ -31,6 +31,12 @@ const Messages = () => {
 
   const selectedChatId = selectedChat?.id;
 
+  const getUserDisplayName = (user) => {
+    const name = user?.name?.trim();
+    const email = user?.email?.trim();
+    return name || email || "Unknown teammate";
+  };
+
   const selectedParticipant = useMemo(() => selectedChat?.participant || null, [selectedChat]);
 
   const filteredChats = useMemo(() => {
@@ -45,7 +51,7 @@ const Messages = () => {
   const filteredContacts = useMemo(() => {
     if (!searchTerm.trim()) return contacts;
     const query = searchTerm.toLowerCase();
-    return contacts.filter((contact) => `${contact.name} ${contact.email}`.toLowerCase().includes(query));
+    return contacts.filter((contact) => `${getUserDisplayName(contact)} ${contact.email}`.toLowerCase().includes(query));
   }, [contacts, searchTerm]);
 
   const loadChats = async () => {
@@ -213,7 +219,7 @@ const Messages = () => {
                   >
                     <div className="flex min-w-0 items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="break-words font-medium">{chat.participant?.name || "Unknown teammate"}</p>
+                        <p className="break-words font-medium">{getUserDisplayName(chat.participant)}</p>
                         <p className="mt-1 break-all text-xs text-gray-500">{chat.participant?.email}</p>
                       </div>
                       {chat.unreadCount > 0 && (
@@ -251,7 +257,7 @@ const Messages = () => {
                     }`}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="break-words font-medium">{contact.name}</p>
+                      <p className="break-words font-medium">{getUserDisplayName(contact)}</p>
                       <p className="break-all text-xs text-gray-500">{contact.email}</p>
                     </div>
                     <span className="shrink-0 text-xs font-semibold text-blue-500">Message</span>
@@ -270,7 +276,7 @@ const Messages = () => {
       >
         <div className={`min-w-0 border-b px-6 py-5 ${darkMode ? "border-gray-700" : "border-blue-100"}`}>
           <h2 className="break-words text-xl font-semibold">
-            {selectedParticipant?.name || "Select a conversation"}
+            {selectedParticipant ? getUserDisplayName(selectedParticipant) : "Select a conversation"}
           </h2>
           {selectedParticipant?.email ? (
             <p className="mt-1 break-all text-sm text-gray-500">{selectedParticipant.email}</p>

@@ -23,6 +23,23 @@ const ProjectSettings = () => {
   const [inviteEmail, setInviteEmail] = useState("");
   const [role, setRole] = useState("member");
 
+  const getUserDisplayName = (user) => {
+    const name = user?.name?.trim();
+    const email = user?.email?.trim();
+    return name || email || "Unknown user";
+  };
+
+  const getRoleLabel = (value = "") => {
+    const labels = {
+      admin: "Admin",
+      manager: "Manager",
+      member: "Member",
+      viewer: "Viewer"
+    };
+
+    return labels[value] || (value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : "Member");
+  };
+
   const loadSettings = async () => {
     try {
       const [projectData, memberData] = await Promise.all([
@@ -192,11 +209,14 @@ const ProjectSettings = () => {
                   darkMode ? "bg-gray-700" : "bg-gray-100"
                 }`}
               >
-                <div>
-                  <p className="font-medium">{member.userId?.name}</p>
-                  <p className="text-xs opacity-70">{member.userId?.email}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{getUserDisplayName(member.userId)}</p>
                 </div>
-                <span className="text-sm capitalize">{member.role}</span>
+                <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                  darkMode ? "bg-gray-800 text-blue-200" : "bg-white text-blue-700"
+                }`}>
+                  {getRoleLabel(member.role)}
+                </span>
               </div>
             ))}
             {members.length === 0 && (
