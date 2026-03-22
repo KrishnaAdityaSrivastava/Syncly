@@ -5,7 +5,7 @@ import { signOutApi } from "../api/api";
 import { useTheme } from "./themeContext.jsx";
 import { useNotification } from "./notificationContext.jsx";
 
-const Sidebar = ({ setLoading, navigate, userRole }) => {
+const Sidebar = ({ navigate, userRole }) => {
   const { darkMode } = useTheme();
   const { showNotification } = useNotification();
   const location = useLocation();
@@ -42,7 +42,9 @@ const Sidebar = ({ setLoading, navigate, userRole }) => {
 
       <nav className="flex-1 overflow-y-auto p-4 space-y-1 min-h-0">
         {navItems.map(({ label, icon: Icon, path }) => {
-          const isActive = location.pathname === path;
+          const isActive = path === "/projects"
+            ? location.pathname.startsWith("/projects")
+            : location.pathname === path || location.pathname.startsWith(`${path}/`);
           return (
             <button
               key={label}
@@ -75,7 +77,9 @@ const Sidebar = ({ setLoading, navigate, userRole }) => {
           <div className="pt-4">
             <p className="px-4 text-xs uppercase tracking-wide text-gray-500">Admin</p>
             {adminItems.map(({ label, icon: Icon, path }) => {
-              const isActive = location.pathname === path;
+              const isActive = path === "/projects"
+              ? location.pathname.startsWith("/projects")
+              : location.pathname === path || location.pathname.startsWith(`${path}/`);
               return (
                 <button
                   key={label}

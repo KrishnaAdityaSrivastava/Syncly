@@ -4,16 +4,20 @@ import {
   getUserProjectApi,
   getProjectMembersApi,
   updateProjectSettingsApi,
-  addProjectMemberApi
+  addProjectMemberApi,
+  removeProjectMemberApi
 } from "../api/api.js";
 import Loading from "../components/loading.jsx";
 import { useNotification } from "../components/notificationContext.jsx";
 import { useTheme } from "../components/themeContext.jsx";
+import { useDashboard } from "../components/dashboardContext.jsx";
+import { Trash2 } from "lucide-react";
 
 const ProjectSettings = () => {
   const { projectId } = useParams();
   const { darkMode } = useTheme();
   const { showNotification } = useNotification();
+  const { data: dashboardData } = useDashboard();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [project, setProject] = useState(null);
@@ -22,6 +26,7 @@ const ProjectSettings = () => {
   const [description, setDescription] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [role, setRole] = useState("member");
+  const [removingMemberId, setRemovingMemberId] = useState("");
 
   const getUserDisplayName = (user) => {
     const name = user?.name?.trim();
@@ -39,6 +44,9 @@ const ProjectSettings = () => {
 
     return labels[value] || (value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : "Member");
   };
+
+  const currentUserId = dashboardData?.id;
+  const canManageMembers = project?.role === "admin";
 
   const loadSettings = async () => {
     try {
@@ -103,6 +111,24 @@ const ProjectSettings = () => {
       showNotification(err?.response?.data?.message || "Failed to add member", "error");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRemoveMember = async (member) => {
+    if (!canManageMembers) {
+      showNotification("You are not allowed to remove members", "error");
+      return;
+    }
+
+    try {
+      setRemovingMemberId(member._id);
+      await removeProjectMemberApi(projectId, member.userId?._id);
+      setMembers((prev) => prev.filter((item) => item._id !== member._id));
+      showNotification("Member removed", "success");
+    } catch (err) {
+      showNotification(err?.response?.data?.error || err?.response?.data?.message || "Failed to remove member", "error");
+    } finally {
+      setRemovingMemberId("");
     }
   };
 
@@ -205,18 +231,35 @@ const ProjectSettings = () => {
             {members.map((member) => (
               <div
                 key={member._id}
-                className={`flex items-center justify-between rounded-lg px-4 py-2 ${
+                className={`flex items-center justify-between gap-3 rounded-lg px-4 py-2 ${
                   darkMode ? "bg-gray-700" : "bg-gray-100"
                 }`}
               >
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{getUserDisplayName(member.userId)}</p>
                 </div>
-                <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                  darkMode ? "bg-gray-800 text-blue-200" : "bg-white text-blue-700"
-                }`}>
-                  {getRoleLabel(member.role)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                    darkMode ? "bg-gray-800 text-blue-200" : "bg-white text-blue-700"
+                  }`}>
+                    {getRoleLabel(member.role)}
+                  </span>
+                  {canManageMembers && member.userId?._id !== currentUserId && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveMember(member)}
+                      disabled={removingMemberId === member._id}
+                      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition disabled:opacity-50 ${
+                        darkMode
+                          ? "bg-red-500/15 text-red-200 hover:bg-red-500/25"
+                          : "bg-red-100 text-red-700 hover:bg-red-200"
+                      }`}
+                    >
+                      <Trash2 size={14} />
+                      {removingMemberId === member._id ? "Removing..." : "Remove"}
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
             {members.length === 0 && (

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createChatApi,
   getChatContactsApi,
@@ -19,6 +19,7 @@ const Messages = () => {
   const { showNotification } = useNotification();
   const { data } = useDashboard();
   const userId = data?.id;
+  const messagesEndRef = useRef(null);
 
   const [contacts, setContacts] = useState([]);
   const [chats, setChats] = useState([]);
@@ -43,7 +44,7 @@ const Messages = () => {
     if (!searchTerm.trim()) return chats;
     const query = searchTerm.toLowerCase();
     return chats.filter((chat) => {
-      const haystack = `${chat.participant?.name || ""} ${chat.participant?.email || ""} ${chat.lastMessage?.text || ""}`.toLowerCase();
+      const haystack = `${getUserDisplayName(chat.participant)} ${chat.participant?.email || ""} ${chat.lastMessage?.text || ""}`.toLowerCase();
       return haystack.includes(query);
     });
   }, [chats, searchTerm]);
@@ -54,28 +55,34 @@ const Messages = () => {
     return contacts.filter((contact) => `${getUserDisplayName(contact)} ${contact.email}`.toLowerCase().includes(query));
   }, [contacts, searchTerm]);
 
-  const loadChats = async () => {
+  const loadChats = async ({ silent = false } = {}) => {
     try {
-      setLoadingChats(true);
+      if (!silent) setLoadingChats(true);
       const [chatData, contactData] = await Promise.all([
         getChatsApi(),
         getChatContactsApi()
       ]);
       setChats(chatData);
       setContacts(contactData);
+      setSelectedChat((prev) => {
+        if (!prev) return prev;
+        return chatData.find((chat) => chat.id === prev.id) || prev;
+      });
     } catch (error) {
-      showNotification(
-        error?.response?.data?.message || "Failed to load chats",
-        "error"
-      );
+      if (!silent) {
+        showNotification(
+          error?.response?.data?.message || "Failed to load chats",
+          "error"
+        );
+      }
     } finally {
-      setLoadingChats(false);
+      if (!silent) setLoadingChats(false);
     }
   };
 
-  const loadMessages = async (chatId) => {
+  const loadMessages = async (chatId, { silent = false } = {}) => {
     try {
-      setLoadingMessages(true);
+      if (!silent) setLoadingMessages(true);
       const data = await getChatMessagesApi(chatId);
       setMessages(data);
       await markChatReadApi(chatId);
@@ -85,12 +92,14 @@ const Messages = () => {
         )
       );
     } catch (error) {
-      showNotification(
-        error?.response?.data?.message || "Failed to load messages",
-        "error"
-      );
+      if (!silent) {
+        showNotification(
+          error?.response?.data?.message || "Failed to load messages",
+          "error"
+        );
+      }
     } finally {
-      setLoadingMessages(false);
+      if (!silent) setLoadingMessages(false);
     }
   };
 
@@ -103,6 +112,29 @@ const Messages = () => {
       loadMessages(selectedChatId);
     }
   }, [selectedChatId]);
+
+  useEffect(() => {
+    const chatsInterval = window.setInterval(() => {
+      loadChats({ silent: true });
+    }, 10000);
+
+    return () => window.clearInterval(chatsInterval);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedChatId) return undefined;
+
+    const messagesInterval = window.setInterval(() => {
+      loadMessages(selectedChatId, { silent: true });
+      loadChats({ silent: true });
+    }, 5000);
+
+    return () => window.clearInterval(messagesInterval);
+  }, [selectedChatId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages]);
 
   const handleSelectChat = (chat) => {
     setSelectedChat(chat);
@@ -152,6 +184,7 @@ const Messages = () => {
             : chat
         )
       );
+      loadChats({ silent: true });
     } catch (error) {
       showNotification(
         error?.response?.data?.message || "Failed to send message",
@@ -327,6 +360,7 @@ const Messages = () => {
                     </div>
                   );
                 })}
+                <div ref={messagesEndRef} />
               </div>
             )}
           </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getUserProjectsApi, createProjectApi } from "../api/api.js";
 import ProjectList from "../components/projectList.jsx";
 import Loading from "../components/loading.jsx";
@@ -15,6 +15,17 @@ const Projects = () => {
   const [showModal, setShowModal] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
+
+  const sortedProjects = useMemo(() => {
+    const getProjectTimestamp = (project) => {
+      const projectMeta = project?.projectId || {};
+      const candidate = projectMeta.updatedAt || projectMeta.createdAt || project.updatedAt || project.createdAt;
+      const parsed = candidate ? new Date(candidate).getTime() : 0;
+      return Number.isNaN(parsed) ? 0 : parsed;
+    };
+
+    return [...projects].sort((a, b) => getProjectTimestamp(b) - getProjectTimestamp(a));
+  }, [projects]);
 
   // Fetch projects
   const fetchProjects = async () => {
@@ -97,7 +108,7 @@ const Projects = () => {
       {loading ? (
         <Loading variant="inline" text="Loading Project List..." />
       ) : (
-        <ProjectList projects={projects} darkMode={darkMode} />
+        <ProjectList projects={sortedProjects} darkMode={darkMode} />
       )}
 
       {/* Modal */}

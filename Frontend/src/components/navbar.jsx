@@ -1,7 +1,7 @@
 import { Sun, Moon, User } from "lucide-react";
 import { useTheme } from "./themeContext.jsx";
 
-const Navbar = ({ active, userName = "hi" }) => {
+const Navbar = ({ active, userName = "User" }) => {
   const { darkMode, toggleTheme } = useTheme();
   const capitalize = (value) => {
     const safeValue = String(value || "User");
@@ -28,7 +28,7 @@ const Navbar = ({ active, userName = "hi" }) => {
           {darkMode ? <Sun className="text-yellow-400" /> : <Moon className="text-blue-600" />}
         </button>
 
-        <span className="min-w-0 break-words text-sm sm:text-base">Hello, {capitalize(userName.split(" ")[0])}</span>
+        <span className="min-w-0 break-words text-sm sm:text-base">Hi {capitalize(userName.split(" ")[0] || "User")}</span>
         <User className="shrink-0" />
       </div>
     </header>
