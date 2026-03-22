@@ -13,6 +13,36 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -46,6 +76,24 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+span,
+button,
+a,
+label {
+  overflow-wrap: anywhere;
+}
+
+textarea {
+  field-sizing: content;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -77,5 +125,3 @@ button:focus-visible {
 .animate-slide-in {
   animation: slideIn 0.3s ease-out;
 }
-
-

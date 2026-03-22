@@ -20,8 +20,6 @@ const Dashboard = () => {
 
   return (
     <div className={`min-h-screen w-full pt-0 ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
-      <h1 className="text-2xl font-semibold mb-4">Dashboard</h1>
-
       <div className="px-6">
         <MainWorkspace
           stats={stats}
