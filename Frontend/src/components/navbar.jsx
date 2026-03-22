@@ -3,21 +3,23 @@ import { useTheme } from "./themeContext.jsx";
 
 const Navbar = ({ active, userName = "hi" }) => {
   const { darkMode, toggleTheme } = useTheme();
-  const capitalize = (s) => String(s[0]).toUpperCase() + String(s).slice(1).toLowerCase();
+  const capitalize = (value) => {
+    const safeValue = String(value || "User");
+    return safeValue.charAt(0).toUpperCase() + safeValue.slice(1).toLowerCase();
+  };
 
   return (
     <header
-      className={`flex items-center justify-between px-6 py-4 shadow-sm border-b transition-colors ${
+      className={`flex flex-col gap-4 border-b px-4 py-4 shadow-sm transition-colors sm:flex-row sm:items-center sm:justify-between sm:px-6 ${
         darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"
       }`}
     >
-      <h1 className="text-xl font-semibold">{active}</h1>
+      <h1 className="min-w-0 break-words text-xl font-semibold">{active}</h1>
 
-      <div className="flex items-center space-x-4">
-        {/* Dark Mode Toggle */}
+      <div className="flex min-w-0 flex-wrap items-center gap-3 sm:justify-end">
         <button
           onClick={toggleTheme}
-          className={`p-2 rounded-full border transition-colors ${
+          className={`shrink-0 rounded-full border p-2 transition-colors ${
             darkMode
               ? "bg-gray-700 border-gray-600 hover:bg-gray-600"
               : "bg-gray-200 border-gray-300 hover:bg-gray-300"
@@ -26,8 +28,8 @@ const Navbar = ({ active, userName = "hi" }) => {
           {darkMode ? <Sun className="text-yellow-400" /> : <Moon className="text-blue-600" />}
         </button>
 
-        <span>Hello, {capitalize(userName.split(" ")[0])}</span>
-        <User />
+        <span className="min-w-0 break-words text-sm sm:text-base">Hello, {capitalize(userName.split(" ")[0])}</span>
+        <User className="shrink-0" />
       </div>
     </header>
   );

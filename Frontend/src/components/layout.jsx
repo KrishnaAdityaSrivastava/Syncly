@@ -41,21 +41,21 @@ const LayoutContent = ({ children }) => {
 
   return (
     <DashboardProvider data={data} refresh={fetchData}>
-      <div className={`min-h-screen flex transition-colors ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
-        {/* Sidebar */}
-        <div className="fixed top-0 left-0 h-full w-64">
-          <Sidebar
-            active={active}
-            setActive={setActive}
-            navigate={navigate}
-            userRole={data.role}
-          />
-        </div>
+      <div className={`min-h-screen transition-colors ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
+        <div className="flex min-h-screen flex-col lg:flex-row">
+          <div className="lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0">
+            <Sidebar
+              active={active}
+              setActive={setActive}
+              navigate={navigate}
+              userRole={data.role}
+            />
+          </div>
 
-        {/* Main */}
-        <div className="flex-1 flex flex-col pl-64">
-          <Navbar active={active} />
-          <div className="p-6">{children}</div>
+          <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+            <Navbar active={active} userName={data?.name || "User"} />
+            <main className="flex-1 min-w-0 p-4 sm:p-6">{children}</main>
+          </div>
         </div>
       </div>
     </DashboardProvider>
