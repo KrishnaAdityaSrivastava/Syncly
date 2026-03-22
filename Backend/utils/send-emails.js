@@ -1,13 +1,21 @@
-import { Resend } from 'resend';
+import FormData from "form-data";
+import Mailgun from "mailgun.js";
 import { verificationEmail, projectInviteEmail } from './email-template.js';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const mailgun = new Mailgun(FormData);
 
-// You can set this in env instead of accountEmail
-const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+const mg = mailgun.client({
+    username: "api",
+    key: process.env.MAILGUN_API_KEY,
+});
+
+const DOMAIN = process.env.MAILGUN_DOMAIN;
+const FROM_EMAIL = process.env.FROM_EMAIL;
 
 const handleEmailError = (error) => {
-    const serviceError = new Error(error?.message || 'Failed to send email');
+    const serviceError = new Error(
+        error?.message || 'Failed to send email'
+    );
     serviceError.statusCode = 503;
     throw serviceError;
 };
@@ -18,9 +26,9 @@ export const sendVerificationEmail = async ({ to, otpCode }) => {
     const message = verificationEmail({ otpCode });
 
     try {
-        await resend.emails.send({
+        await mg.messages.create(DOMAIN, {
             from: FROM_EMAIL,
-            to,
+            to: [to],
             subject: 'Your Verification Email',
             html: message,
         });
@@ -40,9 +48,9 @@ export const sendProjectInviteEmail = async ({ to, projectName, inviteLink }) =>
     });
 
     try {
-        await resend.emails.send({
+        await mg.messages.create(DOMAIN, {
             from: FROM_EMAIL,
-            to,
+            to: [to],
             subject: `You're Invited to Join ${projectName}!`,
             html: message,
         });
