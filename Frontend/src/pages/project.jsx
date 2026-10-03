@@ -90,13 +90,13 @@ const Projects = () => {
   }, []);
 
   return (
-    <div className="w-full">
-      {/* Header actions */}
-      <div className="mb-6 flex items-center justify-end">
+    <div className="page-enter w-full">
+      <div className="mb-7 flex items-end justify-between gap-4 border-b border-slate-200 pb-5 dark:border-[#2a3445]">
+        <div><p className="text-sm font-medium text-[#bd4f29]">Workspace</p><h2 className="mt-1 text-2xl font-semibold tracking-tight">Projects</h2><p className="mt-1 text-sm text-slate-500">Browse and manage the work your team owns.</p></div>
         {/* Create Project Button */}
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 transition shadow-md hover:shadow-blue-500/25 font-medium"
+          className="bg-[#e66a3d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#cb5630] active:scale-[.98]"
         >
           + Create Project
         </button>

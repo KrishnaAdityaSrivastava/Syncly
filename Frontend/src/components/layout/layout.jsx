@@ -7,6 +7,8 @@ import { dashBoardApi } from "../../api/api";
 import { useNotification } from "../../context/notificationContext.jsx";
 import { DashboardProvider } from "../../context/dashboardContext.jsx";
 import { ThemeProvider, useTheme } from "../../context/themeContext.jsx";
+import { motion } from "framer-motion";
+import "../../App.css";
 
 const routeTitles = [
   { match: (pathname) => pathname.startsWith("/projects"), label: "Projects" },
@@ -57,7 +59,7 @@ const LayoutContent = ({ children }) => {
 
   return (
     <DashboardProvider data={data} refresh={fetchData}>
-      <div className={`min-h-screen transition-colors ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
+      <div className={`app-shell min-h-screen transition-colors duration-200 ${darkMode ? "app-shell--dark" : ""}`}>
         <div className="flex min-h-screen flex-col lg:flex-row">
           <div className="lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0">
             <Sidebar
@@ -68,7 +70,7 @@ const LayoutContent = ({ children }) => {
 
           <div className="flex min-h-screen min-w-0 flex-1 flex-col">
             <Navbar active={activeLabel} userName={data?.name || "User"} />
-            <main className="flex-1 min-w-0 p-4 sm:p-6">{children}</main>
+            <motion.main initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }} className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">{children}</motion.main>
           </div>
         </div>
       </div>

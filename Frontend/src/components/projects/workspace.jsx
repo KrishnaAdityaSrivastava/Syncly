@@ -1,110 +1,19 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, ArrowRight, Check } from "lucide-react";
 import { addTaskApi, upgradeTaskApi } from "../../api/api";
 import Loading from "../common/loading.jsx";
 import { useNotification } from "../../context/notificationContext.jsx";
 import { useTheme } from "../../context/themeContext.jsx";
 
+const statuses = [{ name: "To do", value: "todo", dot: "bg-slate-400" }, { name: "In progress", value: "pending", dot: "bg-amber-500" }, { name: "Done", value: "done", dot: "bg-emerald-500" }];
 const MainWorkspace = ({ stats, tasks, refreshDashboard }) => {
-  const { darkMode } = useTheme();
-  const columns = ["To Do", "In Progress", "Done"];
-  const [loading, setLoading] = useState(false);
-  const [title, setTitle] = useState("");
-  const { showNotification } = useNotification();
-
-  const handleAddTask = async () => {
-    if (!title.trim()) return;
-    try {
-      setLoading(true);
-      await addTaskApi(title);
-      setTitle("");
-      await refreshDashboard();
-      showNotification("Task added successfully", "success");
-    } catch {
-      showNotification("Failed to add task", "error");
-    } finally {
-      setTimeout(() => setLoading(false), 300);
-    }
-  };
-
-  const handleUpgradeTask = async (task) => {
-    if (task.status === "done") return;
-    try {
-      setLoading(true);
-      await upgradeTaskApi(task);
-      await refreshDashboard();
-      showNotification(`Task "${task.text}" updated`, "success");
-    } catch {
-      showNotification(`Failed to update task "${task.text}"`, "error");
-    } finally {
-      setTimeout(() => setLoading(false), 300);
-    }
-  };
-
-  return (
-    <main className="flex-1 space-y-8">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, idx) => (
-          <div
-            key={idx}
-            className={`p-4 rounded-xl shadow transition-colors ${darkMode ? "bg-gray-800" : "bg-white"}`}
-          >
-            <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>{stat.label}</p>
-            <h2 className="text-2xl font-bold">{stat.value}</h2>
-          </div>
-        ))}
-      </div>
-
-      {/* Add Task */}
-      <div className="flex items-center gap-3 relative">
-        <button
-          onClick={handleAddTask}
-          disabled={loading}
-          className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-500 transition disabled:opacity-50"
-        >
-          <Plus size={20} />
-        </button>
-
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
-          placeholder="Add a task..."
-          className={`px-3 py-2 w-72 border rounded-lg ${darkMode ? "bg-gray-800 text-gray-200 border-gray-700 focus:border-blue-400" : "bg-white text-gray-900 border-gray-300 focus:border-blue-500"} outline-none`}
-        />
-
-        {loading && (
-          <div className="absolute right-0 top-1/2 -translate-y-1/2">
-            <Loading variant="button" text="Updating tasks..." />
-          </div>
-        )}
-      </div>
-
-      {/* Kanban */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {columns.map((col) => (
-          <div
-            key={col}
-            className={`p-4 rounded-xl shadow ${darkMode ? "bg-gray-800" : "bg-white"}`}
-          >
-            <h3 className="font-semibold mb-4">{col}</h3>
-            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-              {tasks(col === "To Do" ? "todo" : col === "In Progress" ? "pending" : "done").map((task) => (
-                <div
-                  key={task._id}
-                  className={`p-3 rounded-lg cursor-pointer transition ${darkMode ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-100 hover:bg-blue-50"}`}
-                  onClick={() => handleUpgradeTask(task)}
-                >
-                  {task.text}
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </main>
-  );
+  const { darkMode } = useTheme(); const [loading, setLoading] = useState(false); const [title, setTitle] = useState(""); const { showNotification } = useNotification();
+  const addTask = async () => { if (!title.trim()) return; try { setLoading(true); await addTaskApi(title); setTitle(""); await refreshDashboard(); showNotification("Task added", "success"); } catch { showNotification("Failed to add task", "error"); } finally { setLoading(false); } };
+  const advance = async (task) => { if (task.status === "done") return; try { setLoading(true); await upgradeTaskApi(task); await refreshDashboard(); showNotification("Task moved forward", "success"); } catch { showNotification("Unable to update task", "error"); } finally { setLoading(false); } };
+  const panel = darkMode ? "border-[#2a3445] bg-[#1a2130]" : "border-slate-200 bg-white";
+  return <main className="page-enter space-y-7"><section className="grid grid-cols-2 border border-slate-200 bg-white sm:grid-cols-4 dark:border-[#2a3445] dark:bg-[#1a2130]">{stats.map((stat) => <div key={stat.label} className={`p-4 ${darkMode ? "border-[#2a3445]" : "border-slate-200"} border-b sm:border-b-0 sm:border-r last:border-r-0`}><p className="text-xs font-medium uppercase tracking-[.09em] text-slate-500">{stat.label}</p><p className={`mt-2 text-2xl font-semibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{stat.value || 0}</p></div>)}</section>
+    <section className={`flex flex-col gap-3 border p-4 sm:flex-row sm:items-center ${panel}`}><div className="flex h-9 flex-1 items-center gap-2 border border-slate-200 bg-slate-50 px-3 focus-within:border-[#e66a3d] focus-within:bg-white dark:border-[#344055] dark:bg-[#151c29]"><Plus size={16} className="text-[#e66a3d]" /><input value={title} onChange={(event) => setTitle(event.target.value)} onKeyDown={(event) => event.key === "Enter" && addTask()} placeholder="Add a personal task" className="w-full bg-transparent text-sm outline-none" aria-label="New task title" /></div><button onClick={addTask} disabled={loading || !title.trim()} className="flex h-9 items-center justify-center gap-2 bg-[#e66a3d] px-4 text-sm font-semibold text-white transition hover:bg-[#cb5630] active:scale-[.98] disabled:opacity-50">{loading ? <Loading variant="button" text="Saving" /> : <>Add task <ArrowRight size={15} /></>}</button></section>
+    <section className="grid gap-4 lg:grid-cols-3">{statuses.map((status) => { const items = tasks(status.value); return <div key={status.value} className={`border ${panel}`}><div className="flex items-center justify-between border-b border-inherit px-4 py-3"><div className="flex items-center gap-2 text-sm font-semibold"><span className={`h-2 w-2 rounded-full ${status.dot}`} />{status.name}</div><span className="text-xs text-slate-400">{items.length}</span></div><div className="min-h-48 space-y-2 p-2">{items.length ? items.map((task) => <button key={task._id} onClick={() => advance(task)} className={`group flex w-full items-center justify-between border p-3 text-left text-sm transition hover:border-[#e66a3d] hover:shadow-sm ${darkMode ? "border-[#344055] bg-[#151c29] text-slate-100" : "border-slate-200 bg-white text-slate-800"}`}><span>{task.text}</span>{status.value === "done" ? <Check size={15} className="text-emerald-500" /> : <ArrowRight size={15} className="opacity-0 transition group-hover:opacity-100 text-[#e66a3d]" />}</button>) : <p className="px-2 py-7 text-center text-sm text-slate-400">Nothing here yet</p>}</div></div>; })}</section>
+  </main>;
 };
-
 export default MainWorkspace;
