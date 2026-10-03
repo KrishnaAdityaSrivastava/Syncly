@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FolderKanban, ArrowUpRight, ShieldCheck, User } from "lucide-react";
 import { motion } from "framer-motion";
 
