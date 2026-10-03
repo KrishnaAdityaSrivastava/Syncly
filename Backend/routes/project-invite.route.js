@@ -21,6 +21,7 @@ inviteRouter.post(
 // Accept invite using token
 inviteRouter.post(
     "/accept",
+    authorize,
     acceptProjectInvite
 );
 

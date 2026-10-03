@@ -57,6 +57,16 @@ export const env = {
   COOKIE_SAME_SITE: cookieSameSite,
   COOKIE_SECURE: cookieSecure,
   EMAIL_VERIFICATION_REQUIRED: parseBoolean(process.env.EMAIL_VERIFICATION_REQUIRED, true),
+  REQUEST_TIMEOUT_MS: Number(process.env.REQUEST_TIMEOUT_MS || 30000),
+};
+
+export const validateProductionEnv = () => {
+  if (nodeEnv !== "production") return;
+  const required = ["DB_URI", "JWT_SECRET", "INVITE_SECRET", "CLIENT_URL"];
+  const missing = required.filter((key) => !env[key]);
+  if (missing.length) {
+    throw new Error(`Missing required production environment variables: ${missing.join(", ")}`);
+  }
 };
 
 export const {
@@ -74,4 +84,5 @@ export const {
   COOKIE_SAME_SITE,
   COOKIE_SECURE,
   EMAIL_VERIFICATION_REQUIRED,
+  REQUEST_TIMEOUT_MS,
 } = env;

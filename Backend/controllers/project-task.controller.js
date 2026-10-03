@@ -15,6 +15,7 @@ export const getProjectTasks = async (req, res, next) => {
     const tasks = await ProjectTask.find({ projectId })
       .populate("assignee", "name email")
       .populate("createdBy", "name email")
+      .sort({ updatedAt: -1 })
       .lean();
 
     res.status(200).json({

@@ -186,8 +186,8 @@ const ProjectDetail = () => {
       setInviteEmail("");
 
       setTimeout(() => setShowInviteModal(false), 500);
-    } catch (err) {
-      showNotification("Failed to send invite.", "error");
+    } catch (error) {
+      showNotification(error?.response?.data?.message || "Failed to send invite.", "error");
     } finally {
       setInviteLoading(false);
     }

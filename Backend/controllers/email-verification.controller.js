@@ -2,10 +2,11 @@ import EmailVerification from "../models/email-verification.model.js"
 import User from "../models/user.model.js"
 
 import { sendVerificationEmail } from "../utils/send-emails.js";
+import { normalizeEmail, requireString } from "../utils/http-error.js";
 
 export const sendOtp = async (req, res, next) => {
     try {
-        const { email } = req.body;
+        const email = normalizeEmail(req.body.email);
 
         const existing = await User.findOne({ email });
         if (existing) {
@@ -29,7 +30,7 @@ export const sendOtp = async (req, res, next) => {
             otpCode: otp
         });
 
-        res.json({ message: "OTP sent successfully" });
+        res.json({ success: true, message: "OTP sent successfully" });
     }
     catch (error) {
         next(error);
@@ -39,7 +40,8 @@ export const sendOtp = async (req, res, next) => {
 export const verifyOtp = async (req, res, next) => {
     try {
 
-        const { email, otp } = req.body;
+        const email = normalizeEmail(req.body.email);
+        const otp = requireString(req.body.otp, "OTP", { min: 6, max: 6 });
 
         const record = await EmailVerification.findOne({ email });
         if (!record) {
@@ -63,7 +65,7 @@ export const verifyOtp = async (req, res, next) => {
         record.verified = true;
         await record.save();
 
-        res.json({ message: "Email verified successfully" });
+        res.json({ success: true, message: "Email verified successfully" });
     }
     catch (error) {
         next(error);

@@ -9,4 +9,6 @@ const socketUrl = trimTrailingSlash(
 // connect immediately
 export const socket = io(socketUrl, {
   withCredentials: true,
+  autoConnect: false,
+  reconnectionAttempts: 3,
 });

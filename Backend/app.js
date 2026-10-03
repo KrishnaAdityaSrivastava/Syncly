@@ -3,8 +3,9 @@ import cors from "cors";
 import cookieParser from 'cookie-parser';
 import { createServer } from "http";
 import { Server } from "socket.io";
+import jwt from "jsonwebtoken";
 
-import { PORT, CORS_ORIGINS, NODE_ENV } from './config/env.js';
+import { PORT, CORS_ORIGINS, NODE_ENV, REQUEST_TIMEOUT_MS, validateProductionEnv } from './config/env.js';
 
 import ConnectToDatabase, { getDatabaseStatus } from './database/mongodb.js';
 
@@ -21,6 +22,10 @@ import notificationRouter from './routes/notification.route.js';
 import requestTimer from './middlewares/requestTimer.middleware.js';
 import errorMiddleware from './middlewares/error.middleware.js';
 import arcjetMiddleware from './middlewares/arcject.middleware.js';
+import rateLimit from "./middlewares/rate-limit.middleware.js";
+import { requestId, requestTimeout, securityHeaders } from "./middlewares/security.middleware.js";
+import ProjectMember from "./models/project-member.model.js";
+import mongoose from "mongoose";
 
 const app = express();
 
@@ -39,7 +44,10 @@ const corsOptions = {
       return;
     }
 
-    callback(new Error(`CORS blocked for origin: ${origin}`));
+    const error = new Error("Origin is not allowed");
+    error.statusCode = 403;
+    error.errorType = "CORS_NOT_ALLOWED";
+    callback(error);
   },
   credentials: true,
 };
@@ -47,20 +55,29 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.set("trust proxy", 1);
+app.disable("x-powered-by");
+app.use(requestId);
+app.use(securityHeaders);
+app.use(express.json({ limit: "100kb" }));
+app.use(express.urlencoded({ extended: false, limit: "100kb" }));
 app.use(cookieParser());
 
 app.use(requestTimer);
+app.use(requestTimeout(REQUEST_TIMEOUT_MS));
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 1000 }));
+app.use("/auth", rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }));
+app.use("/email", rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }));
 app.use(arcjetMiddleware);
 
 app.get('/health', (_req, res) => {
   const databaseStatus = databaseStateLabel[getDatabaseStatus()] || 'unknown';
 
-  res.status(200).json({
+  const ready = getDatabaseStatus() === 1;
+  res.status(ready ? 200 : 503).json({
     success: true,
     data: {
-      status: 'ok',
+      status: ready ? 'ok' : 'degraded',
       env: NODE_ENV,
       databaseStatus,
       timestamp: new Date().toISOString(),
@@ -78,6 +95,13 @@ app.use("/admin", adminRouter);
 app.use("/chats", chatRouter);
 app.use("/notifications", notificationRouter);
 
+app.use((req, _res, next) => {
+  const error = new Error(`Route ${req.method} ${req.originalUrl} not found`);
+  error.statusCode = 404;
+  error.errorType = "NOT_FOUND";
+  next(error);
+});
+
 app.use(errorMiddleware);
 
 const httpServer = createServer(app);
@@ -92,20 +116,48 @@ const io = new Server(httpServer, {
 
 app.set("io", io);
 
+io.use((socket, next) => {
+  const token = socket.handshake.headers.cookie
+    ?.split(";")
+    .map((value) => value.trim())
+    .find((value) => value.startsWith("token="))
+    ?.slice("token=".length);
+  if (!token) return next(new Error("Unauthorized"));
+
+  try {
+    const decoded = jwt.verify(decodeURIComponent(token), process.env.JWT_SECRET);
+    socket.userId = decoded.userId;
+    next();
+  } catch {
+    next(new Error("Unauthorized"));
+  }
+});
+
 io.on("connection", (socket) => {
-  console.info("User connected:", socket.id);
+  console.info(JSON.stringify({ level: "info", message: "socket_connected", socketId: socket.id, userId: socket.userId }));
 
   socket.on("joinUser", (userId) => {
-    if (userId) socket.join(`user:${userId}`);
+    if (userId?.toString() === socket.userId.toString()) socket.join(`user:${socket.userId}`);
   });
 
-  socket.on("joinProject", (projectId) => {
-    socket.join(projectId);
-    console.info(`User ${socket.id} joined project ${projectId}`);
+  socket.on("joinProject", async (projectId) => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(projectId)) return;
+      const membership = await ProjectMember.exists({ projectId, userId: socket.userId });
+      if (membership) socket.join(`project:${projectId}`);
+    } catch (error) {
+      console.error(JSON.stringify({ level: "error", message: "socket_join_failed", error: error.message }));
+    }
   });
 
-  socket.on("sendMessage", ({ projectId, message }) => {
-    socket.to(projectId).emit("receiveMessage", message);
+  socket.on("sendMessage", async ({ projectId, message }) => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(projectId)) return;
+      const membership = await ProjectMember.exists({ projectId, userId: socket.userId });
+      if (membership) socket.to(`project:${projectId}`).emit("receiveMessage", message);
+    } catch (error) {
+      console.error(JSON.stringify({ level: "error", message: "socket_message_failed", error: error.message }));
+    }
   });
 
   socket.on("disconnect", () => {
@@ -113,18 +165,31 @@ io.on("connection", (socket) => {
   });
 });
 
-httpServer.listen(PORT, '0.0.0.0', () => {
-  console.info(`Server running on port ${PORT}`);
-  console.info(`Allowed CORS origins: ${Array.from(allowedOrigins).join(', ')}`);
+const startServer = async () => {
+  validateProductionEnv();
+  await ConnectToDatabase();
+  await new Promise((resolve) => httpServer.listen(PORT, "0.0.0.0", resolve));
+  console.info(JSON.stringify({ level: "info", message: "server_started", port: PORT, env: NODE_ENV }));
+};
 
-  ConnectToDatabase().catch((error) => {
-    if (error?.code === 'ENOTFOUND') {
-      console.error('Database connection error: MongoDB hostname could not be resolved. Check your DB_URI Atlas host, credentials, and network access settings.');
-      return;
-    }
-
-    console.error('Database connection error:', error.message);
+const shutdown = (signal) => {
+  console.info(JSON.stringify({ level: "info", message: "shutdown_started", signal }));
+  io.close();
+  httpServer.close(async () => {
+    await mongoose.connection.close().catch(() => undefined);
+    process.exit(0);
   });
-});
+  setTimeout(() => process.exit(1), 10000).unref();
+};
+
+if (process.env.NODE_ENV !== "test") {
+  startServer().catch((error) => {
+    console.error(JSON.stringify({ level: "error", message: "startup_failed", error: error.message }));
+    process.exit(1);
+  });
+  process.once("SIGTERM", () => shutdown("SIGTERM"));
+  process.once("SIGINT", () => shutdown("SIGINT"));
+}
 
 export default app;
+export { httpServer, startServer };
