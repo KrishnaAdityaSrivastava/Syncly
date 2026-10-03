@@ -7,7 +7,7 @@ import { dashBoardApi } from "../../api/api";
 import { useNotification } from "../../context/notificationContext.jsx";
 import { DashboardProvider } from "../../context/dashboardContext.jsx";
 import { ThemeProvider, useTheme } from "../../context/themeContext.jsx";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import "../../App.css";
 
 const routeTitles = [
@@ -51,26 +51,38 @@ const LayoutContent = ({ children }) => {
 
   if (!data) {
     return (
-      <div className={`flex min-h-screen ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
-        <Loading variant="fullscreen" text="Loading ..." />
+      <div className={`flex min-h-screen ${darkMode ? "dark bg-[#090d16] text-slate-100" : "bg-[#f4f6fb] text-slate-900"}`}>
+        <Loading variant="fullscreen" text="Preparing Syncly Workspace..." />
       </div>
     );
   }
 
   return (
     <DashboardProvider data={data} refresh={fetchData}>
-      <div className={`app-shell min-h-screen transition-colors duration-200 ${darkMode ? "app-shell--dark" : ""}`}>
-        <div className="flex min-h-screen flex-col lg:flex-row">
-          <div className="lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0">
-            <Sidebar
-              navigate={navigate}
-              userRole={data.role}
-            />
-          </div>
+      <div className={`app-shell min-h-screen transition-colors duration-300 ${darkMode ? "dark bg-[#090d16]" : "bg-[#f4f6fb]"}`}>
+        <div className="bg-mesh-pattern relative min-h-screen">
+          <div className="flex min-h-screen flex-col lg:flex-row">
+            {/* Sticky Sidebar Container */}
+            <div className="lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0 z-40">
+              <Sidebar navigate={navigate} userRole={data.role} />
+            </div>
 
-          <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-            <Navbar active={activeLabel} userName={data?.name || "User"} />
-            <motion.main initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }} className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">{children}</motion.main>
+            {/* Main Section */}
+            <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+              <Navbar active={activeLabel} userName={data?.name || "User"} />
+              <AnimatePresence mode="wait">
+                <motion.main
+                  key={location.pathname}
+                  initial={{ opacity: 0, y: 12, scale: 0.995 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.995 }}
+                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8"
+                >
+                  {children}
+                </motion.main>
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>

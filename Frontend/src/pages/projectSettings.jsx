@@ -11,7 +11,8 @@ import Loading from "../components/common/loading.jsx";
 import { useNotification } from "../context/notificationContext.jsx";
 import { useTheme } from "../context/themeContext.jsx";
 import { useDashboard } from "../context/dashboardContext.jsx";
-import { Trash2 } from "lucide-react";
+import { Trash2, UserPlus, Save, Shield, FolderKanban } from "lucide-react";
+import { motion } from "framer-motion";
 
 const ProjectSettings = () => {
   const { projectId } = useParams();
@@ -41,7 +42,6 @@ const ProjectSettings = () => {
       member: "Member",
       viewer: "Viewer"
     };
-
     return labels[value] || (value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : "Member");
   };
 
@@ -106,7 +106,7 @@ const ProjectSettings = () => {
       }
       setInviteEmail("");
       setRole("member");
-      showNotification("Member added", "success");
+      showNotification("Member added to project", "success");
     } catch (err) {
       showNotification(err?.response?.data?.message || "Failed to add member", "error");
     } finally {
@@ -132,140 +132,143 @@ const ProjectSettings = () => {
     }
   };
 
-  if (loading) return <Loading variant="inline" text="Loading project settings..." />;
+  if (loading) return <Loading variant="inline" text="Loading Project Settings..." />;
   if (!project) return (
-    <div
-      className={`rounded-xl border p-6 text-sm ${
-        darkMode
-          ? "border-red-500/30 bg-red-500/10 text-red-200"
-          : "border-red-200 bg-red-50 text-red-700"
-      }`}
-    >
+    <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-6 text-sm text-rose-300">
       Unable to load project settings.
     </div>
   );
 
   return (
-    <div className={`min-h-screen ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
-      <div className="space-y-6">
-        <section className={`rounded-xl border p-6 shadow-sm ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          <h2 className="text-xl font-semibold mb-4">Project Details</h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="text-sm text-gray-400">Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                className={`mt-1 w-full rounded-lg border px-3 py-2 outline-none ${
-                  darkMode
-                    ? "bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500"
-                    : "bg-gray-100 border-gray-300 text-gray-900 focus:border-blue-500"
-                }`}
-              />
-            </div>
-            <div>
-              <label className="text-sm text-gray-400">Description</label>
-              <input
-                type="text"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                className={`mt-1 w-full rounded-lg border px-3 py-2 outline-none ${
-                  darkMode
-                    ? "bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500"
-                    : "bg-gray-100 border-gray-300 text-gray-900 focus:border-blue-500"
-                }`}
-              />
-            </div>
-          </div>
-          <div className="mt-4">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-500 disabled:opacity-60"
-            >
-              Save Changes
-            </button>
-          </div>
-        </section>
-
-        <section className={`rounded-xl border p-6 shadow-sm ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          <h2 className="text-xl font-semibold mb-4">Members & Roles</h2>
-          <div className="grid gap-4 md:grid-cols-3">
-            <input
-              type="email"
-              value={inviteEmail}
-              onChange={(event) => setInviteEmail(event.target.value)}
-              placeholder="member@syncly.com"
-              className={`rounded-lg border px-3 py-2 outline-none ${
-                darkMode
-                  ? "bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500"
-                  : "bg-gray-100 border-gray-300 text-gray-900 focus:border-blue-500"
-              }`}
-            />
-            <select
-              value={role}
-              onChange={(event) => setRole(event.target.value)}
-              className={`rounded-lg border px-3 py-2 outline-none ${
-                darkMode
-                  ? "bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500"
-                  : "bg-gray-100 border-gray-300 text-gray-900 focus:border-blue-500"
-              }`}
-            >
-              <option value="admin">Admin</option>
-              <option value="member">Member</option>
-              <option value="viewer">Viewer</option>
-            </select>
-            <button
-              onClick={handleAddMember}
-              disabled={saving}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-500 disabled:opacity-60"
-            >
-              Add Member
-            </button>
-          </div>
-
-          <div className="mt-4 space-y-2">
-            {members.map((member) => (
-              <div
-                key={member._id}
-                className={`flex items-center justify-between gap-3 rounded-lg px-4 py-2 ${
-                  darkMode ? "bg-gray-700" : "bg-gray-100"
-                }`}
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{getUserDisplayName(member.userId)}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                    darkMode ? "bg-gray-800 text-blue-200" : "bg-white text-blue-700"
-                  }`}>
-                    {getRoleLabel(member.role)}
-                  </span>
-                  {canManageMembers && member.userId?._id !== currentUserId && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveMember(member)}
-                      disabled={removingMemberId === member._id}
-                      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition disabled:opacity-50 ${
-                        darkMode
-                          ? "bg-red-500/15 text-red-200 hover:bg-red-500/25"
-                          : "bg-red-100 text-red-700 hover:bg-red-200"
-                      }`}
-                    >
-                      <Trash2 size={14} />
-                      {removingMemberId === member._id ? "Removing..." : "Remove"}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-            {members.length === 0 && (
-              <p className="text-sm text-gray-400">No members yet.</p>
-            )}
-          </div>
-        </section>
+    <div className="w-full space-y-8">
+      {/* Header */}
+      <div className="border-b border-slate-200/80 dark:border-slate-800 pb-5">
+        <span className="text-xs font-extrabold uppercase tracking-widest text-orange-500">
+          Configuration
+        </span>
+        <h2 className={`mt-0.5 text-2xl font-extrabold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
+          Project Settings
+        </h2>
+        <p className="mt-1 text-xs text-slate-400">
+          Update project details, assign user roles, and manage team permissions.
+        </p>
       </div>
+
+      {/* Project Details Section */}
+      <section className={`rounded-2xl border p-6 backdrop-blur-md shadow-xl space-y-4 ${
+        darkMode ? "border-slate-800 bg-slate-900/80" : "border-slate-200/80 bg-white"
+      }`}>
+        <h3 className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <FolderKanban size={18} className="text-orange-500" /> General Project Details
+        </h3>
+
+        <div className="grid gap-4 md:grid-cols-2 pt-2">
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-1.5">Project Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/70 p-3 text-sm font-semibold outline-none focus:border-orange-500 transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-1.5">Description</label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/70 p-3 text-sm font-medium outline-none focus:border-orange-500 transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="pt-2">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all disabled:opacity-50"
+          >
+            <Save size={15} />
+            <span>Save Settings</span>
+          </motion.button>
+        </div>
+      </section>
+
+      {/* Members & Roles Section */}
+      <section className={`rounded-2xl border p-6 backdrop-blur-md shadow-xl space-y-4 ${
+        darkMode ? "border-slate-800 bg-slate-900/80" : "border-slate-200/80 bg-white"
+      }`}>
+        <h3 className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <Shield size={18} className="text-orange-500" /> Members & Role Governance
+        </h3>
+
+        <div className="grid gap-3 md:grid-cols-3 pt-2">
+          <input
+            type="email"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            placeholder="teammate@syncly.com"
+            className="w-full rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/70 p-3 text-sm outline-none focus:border-orange-500"
+          />
+
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/70 p-3 text-sm font-semibold outline-none focus:border-orange-500"
+          >
+            <option value="admin">Admin</option>
+            <option value="member">Member</option>
+            <option value="viewer">Viewer</option>
+          </select>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleAddMember}
+            disabled={saving}
+            className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-800 border border-slate-700 px-5 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:border-orange-500 disabled:opacity-50"
+          >
+            <UserPlus size={15} />
+            <span>Add Member</span>
+          </motion.button>
+        </div>
+
+        {/* Members Table */}
+        <div className="space-y-2.5 pt-4">
+          {members.map((member) => (
+            <div
+              key={member._id}
+              className="flex items-center justify-between gap-4 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/50 p-3.5 text-xs"
+            >
+              <span className="font-bold text-slate-900 dark:text-slate-100">
+                {getUserDisplayName(member.userId)}
+              </span>
+
+              <div className="flex items-center gap-3">
+                <span className="rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 px-3 py-0.5 text-[10px] font-extrabold uppercase">
+                  {getRoleLabel(member.role)}
+                </span>
+
+                {canManageMembers && member.userId?._id !== currentUserId && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveMember(member)}
+                    disabled={removingMemberId === member._id}
+                    className="flex items-center gap-1 rounded-lg bg-rose-500/10 border border-rose-500/20 px-2.5 py-1 text-[11px] font-bold text-rose-400 hover:bg-rose-500/20 transition-all disabled:opacity-50"
+                  >
+                    <Trash2 size={13} />
+                    <span>{removingMemberId === member._id ? "Removing..." : "Remove"}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 };

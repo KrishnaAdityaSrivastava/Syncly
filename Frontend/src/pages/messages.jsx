@@ -8,13 +8,14 @@ import {
   sendChatMessageApi,
   updateChatRequestApi
 } from "../api/api";
-import { Search, SendHorizonal, MessageCircleMore, Sparkles, Check, X } from "lucide-react";
+import { Search, SendHorizonal, MessageCircleMore, Sparkles, Check, X, User, MessageSquare } from "lucide-react";
 import { useTheme } from "../context/themeContext.jsx";
 import { useNotification } from "../context/notificationContext.jsx";
 import { useDashboard } from "../context/dashboardContext.jsx";
 import { socket } from "../socket.js";
+import { motion, AnimatePresence } from "framer-motion";
 
-const formatTimestamp = (value) => new Date(value).toLocaleString();
+const formatTimestamp = (value) => new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 const Messages = () => {
   const { darkMode } = useTheme();
@@ -182,42 +183,54 @@ const Messages = () => {
   };
 
   return (
-    <div className="grid min-h-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-      <aside className={`flex min-h-0 min-w-0 flex-col overflow-hidden rounded-3xl border shadow-sm ${darkMode ? "border-gray-700 bg-gray-800" : "border-blue-100 bg-white"}`}>
-        <div className={`border-b p-5 ${darkMode ? "border-gray-700" : "border-blue-100"}`}>
-          <div className="flex min-w-0 items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-500">Inbox</p>
-              <h2 className="mt-2 break-words text-xl font-semibold">Direct Messages</h2>
+    <div className="grid min-h-[calc(100vh-8rem)] grid-cols-1 gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+      {/* Left Chat Sidebar */}
+      <aside className={`flex flex-col rounded-2xl border backdrop-blur-md shadow-xl overflow-hidden ${
+        darkMode ? "border-slate-800 bg-slate-900/80 text-slate-100" : "border-slate-200/80 bg-white text-slate-900"
+      }`}>
+        <div className="p-5 border-b border-slate-200/60 dark:border-slate-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-orange-500">
+                Messenger
+              </span>
+              <h2 className="text-xl font-extrabold tracking-tight">Direct Messages</h2>
             </div>
-            <div className={`shrink-0 rounded-2xl p-3 ${darkMode ? "bg-gray-900 text-blue-300" : "bg-blue-50 text-blue-600"}`}>
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-orange-500/10 text-orange-500">
               <MessageCircleMore size={20} />
             </div>
           </div>
-          <div className={`mt-4 flex min-w-0 items-center gap-3 rounded-2xl border px-4 py-3 ${darkMode ? "border-gray-700 bg-gray-900" : "border-blue-100 bg-blue-50/70"}`}>
-            <Search size={18} className="shrink-0 text-gray-400" />
-            <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search chats or teammates" className={`min-w-0 flex-1 bg-transparent text-sm outline-none ${darkMode ? "text-gray-100 placeholder:text-gray-500" : "text-gray-900 placeholder:text-gray-400"}`} />
+
+          <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/70 px-3 py-2 text-xs">
+            <Search size={16} className="text-slate-400" />
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search chats or teammates..."
+              className="w-full bg-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 font-medium"
+            />
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-5">
+        <div className="flex-1 space-y-6 overflow-y-auto p-4">
+          {/* Requests Section */}
           {incomingRequests.length > 0 && (
-            <section className="min-w-0">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <h3 className="text-xs font-semibold uppercase tracking-[0.25em] text-gray-500">Requests</h3>
-                <span className="text-xs text-gray-400">{incomingRequests.length}</span>
+            <section>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Requests</span>
+                <span className="rounded bg-orange-500/10 text-orange-400 text-[10px] font-bold px-1.5 py-0.5">{incomingRequests.length}</span>
               </div>
               <div className="space-y-2">
-                {incomingRequests.map((request) => (
-                  <div key={request.id} className={`rounded-2xl border px-4 py-3 ${darkMode ? "border-gray-700 bg-gray-900" : "border-blue-100 bg-blue-50/40"}`}>
-                    <p className="font-medium">{getUserDisplayName(request.participant)}</p>
-                    <p className="mt-1 text-xs text-gray-500">{request.participant?.email}</p>
-                    <div className="mt-3 flex items-center gap-2">
-                      <button type="button" onClick={() => handleRequestUpdate(request.id, "accept")} className="inline-flex items-center gap-1 rounded-lg bg-blue-500 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-600">
-                        <Check size={14} /> Accept
+                {incomingRequests.map((req) => (
+                  <div key={req.id} className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-3 text-xs">
+                    <p className="font-bold">{getUserDisplayName(req.participant)}</p>
+                    <p className="text-[11px] text-slate-400">{req.participant?.email}</p>
+                    <div className="mt-2.5 flex items-center gap-2">
+                      <button onClick={() => handleRequestUpdate(req.id, "accept")} className="flex items-center gap-1 rounded-lg bg-orange-500 px-2.5 py-1 font-bold text-white shadow-sm">
+                        <Check size={12} /> Accept
                       </button>
-                      <button type="button" onClick={() => handleRequestUpdate(request.id, "reject")} className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold ${darkMode ? "bg-gray-800 text-gray-200 hover:bg-gray-700" : "bg-white text-gray-700 hover:bg-gray-100"}`}>
-                        <X size={14} /> Decline
+                      <button onClick={() => handleRequestUpdate(req.id, "reject")} className="flex items-center gap-1 rounded-lg border border-slate-300 dark:border-slate-700 px-2.5 py-1 font-bold text-slate-400">
+                        <X size={12} /> Decline
                       </button>
                     </div>
                   </div>
@@ -226,51 +239,41 @@ const Messages = () => {
             </section>
           )}
 
-          <section className="min-w-0">
-            <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
-              <h3 className="text-xs font-semibold uppercase tracking-[0.25em] text-gray-500">Conversations</h3>
-              <span className="shrink-0 text-xs text-gray-400">{filteredChats.length}</span>
+          {/* Active Conversations */}
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Conversations</span>
+              <span className="text-[10px] font-bold text-slate-500">{filteredChats.length}</span>
             </div>
             {loadingChats ? (
-              <p className="text-sm text-gray-500">Loading chats...</p>
+              <p className="text-xs text-slate-400 py-4 text-center">Loading chats...</p>
             ) : filteredChats.length === 0 ? (
-              <div className={`rounded-2xl border border-dashed p-4 text-sm ${darkMode ? "border-gray-700 text-gray-400" : "border-blue-100 text-gray-500"}`}>No conversations found.</div>
+              <p className="text-xs text-slate-400 py-4 text-center">No active chats found.</p>
             ) : (
-              <div className="space-y-2">
-                {filteredChats.map((chat) => (
-                  <button key={chat.id} onClick={() => handleSelectChat(chat)} className={`w-full min-w-0 rounded-2xl border px-4 py-3 text-left transition ${selectedChatId === chat.id ? (darkMode ? "border-blue-400 bg-blue-500/10" : "border-blue-300 bg-blue-50") : (darkMode ? "border-gray-700 bg-gray-900 hover:border-blue-400" : "border-blue-100 hover:border-blue-200 hover:bg-blue-50/70")}`}>
-                    <div className="flex min-w-0 items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="break-words font-medium">{getUserDisplayName(chat.participant)}</p>
-                        <p className="mt-1 break-all text-xs text-gray-500">{chat.participant?.email}</p>
-                      </div>
-                      {chat.unreadCount > 0 && <span className="shrink-0 rounded-full bg-blue-500 px-2 py-0.5 text-xs font-semibold text-white">{chat.unreadCount}</span>}
-                    </div>
-                    <p className="mt-3 break-words text-xs text-gray-500">{chat.lastMessage?.text || "No messages yet"}</p>
-                  </button>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className="min-w-0">
-            <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
-              <h3 className="text-xs font-semibold uppercase tracking-[0.25em] text-gray-500">Start a chat</h3>
-              <Sparkles size={14} className="shrink-0 text-blue-500" />
-            </div>
-            {filteredContacts.length === 0 ? (
-              <div className={`rounded-2xl border border-dashed p-4 text-sm ${darkMode ? "border-gray-700 text-gray-400" : "border-blue-100 text-gray-500"}`}>No teammates available.</div>
-            ) : (
-              <div className="space-y-2">
-                {filteredContacts.map((contact) => {
-                  const hasPendingRequest = pendingContactIds.has(contact.id);
+              <div className="space-y-1.5">
+                {filteredChats.map((chat) => {
+                  const active = selectedChatId === chat.id;
                   return (
-                    <button key={contact.id} onClick={() => !hasPendingRequest && handleStartChat(contact.id)} disabled={hasPendingRequest} className={`flex w-full min-w-0 items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition ${darkMode ? "border-gray-700 bg-gray-900 hover:border-blue-400" : "border-blue-100 hover:border-blue-200 hover:bg-blue-50/70"} ${hasPendingRequest ? "opacity-70" : ""}`}>
-                      <div className="min-w-0 flex-1">
-                        <p className="break-words font-medium">{getUserDisplayName(contact)}</p>
-                        <p className="break-all text-xs text-gray-500">{contact.email}</p>
+                    <button
+                      key={chat.id}
+                      onClick={() => handleSelectChat(chat)}
+                      className={`w-full text-left rounded-xl p-3 border transition-all text-xs ${
+                        active 
+                          ? "border-orange-500/50 bg-orange-500/10 text-orange-500 dark:text-orange-400 shadow-sm" 
+                          : "border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <span className="font-extrabold tracking-tight">{getUserDisplayName(chat.participant)}</span>
+                        {chat.unreadCount > 0 && (
+                          <span className="rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-bold text-white">
+                            {chat.unreadCount}
+                          </span>
+                        )}
                       </div>
-                      <span className="shrink-0 text-xs font-semibold text-blue-500">{hasPendingRequest ? "Pending" : "Request"}</span>
+                      <p className="mt-1 line-clamp-1 text-[11px] text-slate-400 font-medium">
+                        {chat.lastMessage?.text || "No messages yet"}
+                      </p>
                     </button>
                   );
                 })}
@@ -278,71 +281,115 @@ const Messages = () => {
             )}
           </section>
 
-          {outgoingRequests.length > 0 && (
-            <section className="min-w-0">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <h3 className="text-xs font-semibold uppercase tracking-[0.25em] text-gray-500">Sent requests</h3>
-                <span className="text-xs text-gray-400">{outgoingRequests.length}</span>
-              </div>
-              <div className="space-y-2">
-                {outgoingRequests.map((request) => (
-                  <div key={request.id} className={`rounded-2xl border px-4 py-3 text-sm ${darkMode ? "border-gray-700 bg-gray-900 text-gray-300" : "border-blue-100 bg-blue-50/40 text-gray-600"}`}>
-                    Waiting for {getUserDisplayName(request.participant)}
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+          {/* Start Chat Contacts */}
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Teammates</span>
+              <Sparkles size={12} className="text-orange-500" />
+            </div>
+            <div className="space-y-1.5">
+              {filteredContacts.map((contact) => {
+                const pending = pendingContactIds.has(contact.id);
+                return (
+                  <button
+                    key={contact.id}
+                    onClick={() => !pending && handleStartChat(contact.id)}
+                    disabled={pending}
+                    className="w-full flex items-center justify-between rounded-xl border border-slate-200/40 dark:border-slate-800/50 p-2.5 text-xs text-left hover:border-orange-500/30 transition-all disabled:opacity-50"
+                  >
+                    <span className="font-bold">{getUserDisplayName(contact)}</span>
+                    <span className="text-[10px] font-bold text-orange-500">
+                      {pending ? "Pending" : "Message"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
         </div>
       </aside>
 
-      <section className={`flex min-h-[calc(100vh-12rem)] min-w-0 flex-col overflow-hidden rounded-3xl border shadow-sm ${darkMode ? "border-gray-700 bg-gray-800" : "border-blue-100 bg-white"}`}>
-        <div className={`min-w-0 border-b px-6 py-5 ${darkMode ? "border-gray-700" : "border-blue-100"}`}>
-          <h2 className="break-words text-xl font-semibold">{selectedParticipant ? getUserDisplayName(selectedParticipant) : "Select a conversation"}</h2>
-          {selectedParticipant?.email ? <p className="mt-1 break-all text-sm text-gray-500">{selectedParticipant.email}</p> : <p className="mt-1 text-sm text-gray-500">Accepted chats appear here.</p>}
-        </div>
-
-        <div className={`flex min-h-0 flex-1 flex-col ${darkMode ? "bg-gray-850" : "bg-slate-50/50"}`}>
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 sm:px-6">
-            {!selectedChatId ? (
-              <div className="flex min-h-[320px] flex-1 items-center justify-center">
-                <div className={`max-w-md rounded-3xl border p-8 text-center ${darkMode ? "border-gray-700 bg-gray-900" : "border-blue-100 bg-white"}`}>
-                  <MessageCircleMore size={28} className="mx-auto text-blue-500" />
-                  <h3 className="mt-4 break-words text-lg font-semibold">Accepted chats appear here</h3>
-                  <p className="mt-2 break-words text-sm text-gray-500">Send a request or open an accepted conversation.</p>
-                </div>
-              </div>
-            ) : loadingMessages ? (
-              <p className="text-sm text-gray-500">Loading messages...</p>
-            ) : messages.length === 0 ? (
-              <div className="flex min-h-[320px] flex-1 items-center justify-center text-sm text-gray-500">No messages yet.</div>
-            ) : (
-              <div className="space-y-4">
-                {messages.map((message) => {
-                  const isSender = message.senderId === userId;
-                  return (
-                    <div key={message.id} className={`flex min-w-0 ${isSender ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-full rounded-3xl px-4 py-3 shadow-sm sm:max-w-[75%] ${isSender ? "bg-blue-500 text-white" : darkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-800"}`}>
-                        <p className="break-words whitespace-pre-wrap text-sm leading-6">{message.body}</p>
-                        <p className={`mt-2 break-words text-[11px] ${isSender ? "text-blue-100" : "text-gray-400"}`}>{formatTimestamp(message.createdAt)}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-          </div>
-
-          <form onSubmit={handleSendMessage} className={`border-t px-4 py-5 sm:px-6 ${darkMode ? "border-gray-700 bg-gray-800" : "border-blue-100 bg-white"}`}>
-            <div className={`flex min-w-0 items-end gap-3 rounded-3xl border p-3 ${darkMode ? "border-gray-700 bg-gray-900" : "border-blue-100 bg-slate-50"}`}>
-              <textarea value={messageBody} onChange={(event) => setMessageBody(event.target.value)} placeholder={selectedChatId ? "Write a message..." : "Select an accepted chat first"} disabled={!selectedChatId} rows={1} className={`max-h-36 min-h-[52px] min-w-0 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none ${darkMode ? "text-gray-100 placeholder:text-gray-500" : "text-gray-900 placeholder:text-gray-400"}`} />
-              <button type="submit" disabled={!selectedChatId || !messageBody.trim()} className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white transition ${!selectedChatId || !messageBody.trim() ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"}`}>
-                <SendHorizonal size={18} />
-              </button>
+      {/* Main Conversation Window */}
+      <section className={`flex flex-col rounded-2xl border backdrop-blur-md shadow-xl overflow-hidden ${
+        darkMode ? "border-slate-800 bg-slate-900/80 text-slate-100" : "border-slate-200/80 bg-white text-slate-900"
+      }`}>
+        {/* Chat Header */}
+        <div className="p-5 border-b border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative grid h-9 w-9 place-items-center rounded-xl bg-orange-500/10 text-orange-500 font-bold">
+              {selectedParticipant ? getUserDisplayName(selectedParticipant)[0].toUpperCase() : <User size={18} />}
+              {selectedParticipant && <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900" />}
             </div>
-          </form>
+            <div>
+              <h2 className="text-base font-extrabold tracking-tight">
+                {selectedParticipant ? getUserDisplayName(selectedParticipant) : "Select a conversation"}
+              </h2>
+              <p className="text-[11px] text-slate-400 font-medium">
+                {selectedParticipant?.email || "Click a teammate on the left to start messaging."}
+              </p>
+            </div>
+          </div>
         </div>
+
+        {/* Message Area */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-[350px]">
+          {!selectedChatId ? (
+            <div className="flex h-full flex-col items-center justify-center text-center py-16">
+              <MessageSquare size={36} className="text-slate-500/50 mb-3" />
+              <p className="text-sm font-bold text-slate-400">Select a conversation to start chatting</p>
+            </div>
+          ) : loadingMessages ? (
+            <p className="text-xs text-slate-400 text-center py-8">Loading message history...</p>
+          ) : messages.length === 0 ? (
+            <p className="text-xs text-slate-400 text-center py-8">No message history yet. Say hello!</p>
+          ) : (
+            messages.map((m) => {
+              const isMe = m.senderId === userId;
+              return (
+                <motion.div
+                  key={m.id}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                >
+                  <div className={`max-w-[75%] rounded-2xl p-3.5 shadow-sm text-xs leading-relaxed ${
+                    isMe 
+                      ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white font-medium" 
+                      : darkMode ? "bg-slate-950 text-slate-100 border border-slate-800" : "bg-slate-100 text-slate-900"
+                  }`}>
+                    <p>{m.body}</p>
+                    <p className={`mt-1.5 text-[9px] font-bold text-right ${isMe ? "text-orange-100" : "text-slate-500"}`}>
+                      {formatTimestamp(m.createdAt)}
+                    </p>
+                  </div>
+                </motion.div>
+              );
+            })
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Bar */}
+        <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-200/60 dark:border-slate-800">
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/70 p-2">
+            <input
+              value={messageBody}
+              onChange={(e) => setMessageBody(e.target.value)}
+              placeholder={selectedChatId ? "Write your message..." : "Select a conversation first..."}
+              disabled={!selectedChatId}
+              className="w-full bg-transparent px-3 py-1.5 text-xs outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 font-medium"
+            />
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              type="submit"
+              disabled={!selectedChatId || !messageBody.trim()}
+              className="grid h-9 w-9 place-items-center rounded-lg bg-orange-500 text-white shadow-md shadow-orange-500/20 disabled:opacity-40"
+            >
+              <SendHorizonal size={16} />
+            </motion.button>
+          </div>
+        </form>
       </section>
     </div>
   );
