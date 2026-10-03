@@ -1,1 +1,8 @@
-@import "tailwindcss";
+/* Application surfaces are deliberately quiet: hierarchy comes from spacing and borders. */
+.app-shell { background: #f7f8fa; color: #172033; }
+.app-shell--dark { background: #121722; color: #eef1f6; }
+.app-panel { border: 1px solid #e3e6eb; background: #fff; box-shadow: 0 1px 2px rgb(20 27 42 / 4%); }
+.app-shell--dark .app-panel { background: #1a2130; border-color: #2a3445; box-shadow: none; }
+.app-input { border: 1px solid #d9dde5; background: #fff; color: #172033; transition: border-color .16s ease, box-shadow .16s ease; }
+.app-input:focus { border-color: #e66a3d; box-shadow: 0 0 0 3px rgb(230 106 61 / 14%); outline: none; }
+.app-shell--dark .app-input { background: #151c29; border-color: #344055; color: #eef1f6; }

@@ -10,5 +10,7 @@ const projectInviteSchema = new mongoose.Schema({
   expiresAt: { type: Date }
 }, { timestamps: true });
 
+projectInviteSchema.index({ projectId: 1, invitedEmail: 1, status: 1 });
+
 const ProjectInvite = mongoose.model("ProjectInvite", projectInviteSchema);
 export default ProjectInvite;

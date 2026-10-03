@@ -1,9 +1,9 @@
-import mongoose from "mongoose";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import EmailVerification from "../models/email-verification.model.js";
 import { parseExpiryToMs } from "../utils/parseExpiry.js";
+import { createHttpError, normalizeEmail, requireString } from "../utils/http-error.js";
 
 import {
   JWT_SECRET,
@@ -58,13 +58,15 @@ const clearAuthCookie = () => {
 };
 
 export const signUp = async (req, res, next) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     const { name, email, password } = req.body;
+    const normalizedName = requireString(name, "Name", { min: 2, max: 50 });
+    const normalizedEmail = normalizeEmail(email);
+    if (typeof password !== "string" || password.length < 8 || password.length > 128) {
+      throw createHttpError(400, "Password must be between 8 and 128 characters", "VALIDATION_ERROR");
+    }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.exists({ email: normalizedEmail });
     if (existingUser) {
       const error = new Error("User already exists");
       error.errorType = "USER_EXIST";
@@ -73,7 +75,7 @@ export const signUp = async (req, res, next) => {
     }
 
     if (EMAIL_VERIFICATION_REQUIRED) {
-      const verification = await EmailVerification.findOne({ email });
+      const verification = await EmailVerification.findOne({ email: normalizedEmail });
       if (!verification || !verification.verified) {
         const error = new Error("Email not verified");
         error.errorType = "EMAIL_NOT_VERIFIED";
@@ -81,19 +83,13 @@ export const signUp = async (req, res, next) => {
         throw error;
       }
 
-      await EmailVerification.deleteOne({ email });
+      await EmailVerification.deleteOne({ email: normalizedEmail });
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const [newUser] = await User.create(
-      [{ name, email, password: hashedPassword }],
-      { session }
-    );
-
-    await session.commitTransaction();
-    session.endSession();
+    const newUser = await User.create({ name: normalizedName, email: normalizedEmail, password: hashedPassword });
 
     const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, {
       expiresIn: JWT_EXPIRE,
@@ -105,11 +101,9 @@ export const signUp = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: "User created and logged in successfully",
-      data: { user: newUser },
+      data: { user: { id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role } },
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     next(error);
   }
 };
@@ -117,21 +111,19 @@ export const signUp = async (req, res, next) => {
 export const signIn = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = normalizeEmail(email);
+    if (typeof password !== "string" || !password) {
+      throw createHttpError(400, "Password is required", "VALIDATION_ERROR");
+    }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
-      const error = new Error("User not found. Please Sign Up instead");
-      error.errorType = "USER_NOT_FOUND";
-      error.statusCode = 404;
-      throw error;
+      throw createHttpError(401, "Invalid email or password", "INVALID_CREDENTIALS");
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      const error = new Error("Incorrect password. Please check the password you have entered");
-      error.errorType = "INVALID_PASSWORD";
-      error.statusCode = 401;
-      throw error;
+      throw createHttpError(401, "Invalid email or password", "INVALID_CREDENTIALS");
     }
 
     if (user.status === "disabled") {

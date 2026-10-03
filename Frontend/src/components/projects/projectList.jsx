@@ -1,82 +1,9 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useNotification } from "../../context/notificationContext.jsx";
-import Loading from "../common/loading.jsx";
-import { useState } from "react";
+import { FolderKanban, ArrowUpRight } from "lucide-react";
 
 const ProjectList = ({ projects, darkMode }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { showNotification } = useNotification();
-  const [loading, setLoading] = useState(false);
-
-  const capitalize = (s = "") =>
-    s.length === 0 ? "" : s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-
-  if (loading) return <Loading variant="inline" text="Opening project..." />;
-
-  if (!projects.length)
-    return (
-      <div
-        className={`rounded-xl border p-6 text-center ${
-          darkMode ? "border-gray-700 bg-gray-800 text-gray-300" : "border-gray-200 bg-white text-gray-600"
-        }`}
-      >
-        <p className="text-sm">No projects found. Create one!</p>
-      </div>
-    );
-
-  const openProject = async (id) => {
-    try {
-      setLoading(true);
-      navigate(`/projects/${id}`);
-    } catch {
-      showNotification("Failed to open project", "error");
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-      {projects.map((p) => {
-        const projectPath = `/projects/${p.projectId._id}`;
-        const isActiveProject = location.pathname === projectPath || location.pathname.startsWith(`${projectPath}/`);
-
-        return (
-        <div
-          key={p._id}
-          onClick={() => openProject(p.projectId._id)}
-          className={`rounded-xl border p-5 shadow-sm transition cursor-pointer group ${
-            isActiveProject
-              ? darkMode
-                ? "ring-2 ring-blue-400 border-blue-400 bg-gray-800"
-                : "ring-2 ring-blue-300 border-blue-500 bg-blue-50/40"
-              : ""
-          } ${
-            darkMode
-              ? "bg-gray-800 border-gray-700 hover:border-blue-400 hover:shadow-blue-500/10"
-              : "bg-white border-gray-200 hover:border-blue-500 hover:shadow-blue-500/10"
-          }`}
-        >
-          <h2 className="text-lg font-semibold transition group-hover:text-blue-500">
-            {capitalize(p.projectId.name)}
-          </h2>
-
-          {p.projectId.description && (
-            <p className={`mt-2 line-clamp-2 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {p.projectId.description}
-            </p>
-          )}
-
-          <div className="mt-4 flex justify-end">
-            <span className={`text-sm ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-              {p.role === "admin" ? "Admin" : "Member"}
-            </span>
-          </div>
-        </div>
-        );
-      })}
-    </div>
-  );
+  const navigate = useNavigate(); const location = useLocation();
+  if (!projects.length) return <div className={`border border-dashed p-10 text-center ${darkMode ? "border-[#344055] text-slate-400" : "border-slate-300 text-slate-500"}`}><FolderKanban size={22} className="mx-auto mb-3 text-[#e66a3d]" /><p className="font-medium">No projects yet</p><p className="mt-1 text-sm">Create a project to give your work a home.</p></div>;
+  return <div className="grid grid-cols-1 gap-px border border-slate-200 bg-slate-200 md:grid-cols-2 xl:grid-cols-3 dark:border-[#2a3445] dark:bg-[#2a3445]">{projects.map((project) => { const data = project.projectId; const path = `/projects/${data._id}`; const active = location.pathname.startsWith(path); return <button key={project._id} onClick={() => navigate(path)} className={`group min-h-44 p-5 text-left transition ${darkMode ? "bg-[#1a2130] hover:bg-[#202a3b]" : "bg-white hover:bg-[#fffaf8]"} ${active ? "ring-1 ring-inset ring-[#e66a3d]" : ""}`}><div className="flex items-start justify-between gap-3"><span className="grid h-8 w-8 place-items-center bg-[#fdf0eb] text-[#bd4f29]"><FolderKanban size={16} /></span><ArrowUpRight size={16} className="text-slate-300 transition group-hover:text-[#e66a3d]" /></div><h2 className={`mt-6 font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>{data.name}</h2><p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-500">{data.description || "No project description"}</p><p className="mt-5 text-xs font-medium uppercase tracking-wide text-slate-400">{project.role || "member"}</p></button>; })}</div>;
 };
-
 export default ProjectList;

@@ -100,12 +100,12 @@ const SignUpForm = () => {
   const renderLoader = loading && <Loading variant="inline" text="Processing..." />;
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-2xl shadow-xl">
-        <h2 className="text-3xl font-bold text-center text-gray-900">Sign Up</h2>
+    <div className="flex min-h-screen items-center justify-center bg-[#f7f8fa] p-6">
+      <div className="w-full max-w-md space-y-6 border border-slate-200 bg-white p-7 shadow-[0_12px_32px_rgba(20,27,42,.08)]">
+        <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Sign Up</h2>
 
         {!emailVerificationRequired && (
-          <p className="rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
+          <p className="border border-[#f5c8b8] bg-[#fdf0eb] px-4 py-3 text-sm text-[#9a3d20]">
             Email verification is disabled in this environment. You can create your account directly.
           </p>
         )}
@@ -117,14 +117,14 @@ const SignUpForm = () => {
                 {...register("email", { required: "Email is required" })}
                 type="email"
                 placeholder="Enter email"
-                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-4 py-2 text-slate-900 border border-slate-300 focus:border-[#e66a3d] focus:outline-none"
               />
               {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
             </div>
 
             <button
               type="submit"
-              className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+              className="w-full px-4 py-2 font-semibold text-white bg-[#e66a3d] hover:bg-[#cb5630] transition active:scale-[.99]"
             >
               Send OTP
             </button>
@@ -141,14 +141,14 @@ const SignUpForm = () => {
               <input
                 {...register("otp", { required: "OTP is required" })}
                 placeholder="Enter OTP"
-                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-4 py-2 text-slate-900 border border-slate-300 focus:border-[#e66a3d] focus:outline-none"
               />
               {errors.otp && <p className="mt-1 text-sm text-red-600">{errors.otp.message}</p>}
             </div>
 
             <button
               type="submit"
-              className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700"
+              className="w-full px-4 py-2 font-semibold text-white bg-[#e66a3d] hover:bg-[#cb5630] transition active:scale-[.99]"
             >
               Verify OTP
             </button>
@@ -156,10 +156,10 @@ const SignUpForm = () => {
             <button
               type="button"
               onClick={resendOtp}
-              className={`w-full px-4 py-2 mt-2 rounded-lg font-semibold ${
+              className={`w-full px-4 py-2 mt-2 font-semibold transition ${
                 resendCooldown > 0
-                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                  : "bg-blue-500 text-white hover:bg-blue-600"
+                  ? "bg-gray-300 text-slate-500 cursor-not-allowed"
+                  : "bg-[#e66a3d] text-white hover:bg-[#cb5630]"
               }`}
             >
               {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : "Resend OTP"}
@@ -176,7 +176,7 @@ const SignUpForm = () => {
                 {...register("email", { required: "Email is required" })}
                 type="email"
                 placeholder="Email"
-                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 text-slate-900 border border-slate-300 focus:border-[#e66a3d]"
               />
               {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
             </div>
@@ -185,7 +185,7 @@ const SignUpForm = () => {
               <input
                 {...register("name", { required: "Name is required" })}
                 placeholder="Name"
-                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 text-slate-900 border border-slate-300 focus:border-[#e66a3d]"
               />
               {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
             </div>
@@ -198,7 +198,7 @@ const SignUpForm = () => {
                 })}
                 type="password"
                 placeholder="Password"
-                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 text-slate-900 border border-slate-300 focus:border-[#e66a3d]"
               />
               {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
             </div>
@@ -210,7 +210,7 @@ const SignUpForm = () => {
                 })}
                 type="password"
                 placeholder="Confirm Password"
-                className="w-full px-4 py-2 text-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 text-slate-900 border border-slate-300 focus:border-[#e66a3d]"
               />
               {errors.confirmPassword && (
                 <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
@@ -219,7 +219,7 @@ const SignUpForm = () => {
 
             <button
               type="submit"
-              className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700"
+              className="w-full px-4 py-2 font-semibold text-white bg-[#e66a3d] hover:bg-[#cb5630] transition active:scale-[.99]"
             >
               Sign Up
             </button>
@@ -229,9 +229,9 @@ const SignUpForm = () => {
         )}
 
         {(emailVerificationRequired ? step !== 3 : true) && (
-          <p className="text-sm text-center text-gray-600">
+          <p className="text-sm text-center text-slate-500">
             Already have an account?
-            <a href="/signin" className="text-blue-600 hover:underline"> Sign in</a>
+            <a href="/signin" className="font-medium text-[#bd4f29] hover:underline"> Sign in</a>
           </p>
         )}
       </div>
