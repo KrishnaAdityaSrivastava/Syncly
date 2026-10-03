@@ -11,12 +11,6 @@ export const getUserProjects = async (req, res, next) => {
       .populate("projectId", "name description createdAt updatedAt")
       .lean();
 
-    if (projects.length == 0) {
-      const error = new Error('No projects was found for this user');
-      error.statusCode = 404;
-      throw error;
-    }
-
     res.status(200).json({
       success: true,
       data: projects

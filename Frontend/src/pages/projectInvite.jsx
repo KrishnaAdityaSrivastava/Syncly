@@ -26,8 +26,12 @@ const ProjectInvite = () => {
         setTimeout(() => {
           navigate("/projects");
         }, 2000);
-      } catch (err) {
-        setStatus("Failed to accept invite or link expired.");
+      } catch (error) {
+        if (error?.response?.status === 401) {
+          setStatus("Please sign in with the invited account before accepting this invitation.");
+        } else {
+          setStatus(error?.response?.data?.message || "Failed to accept invite or link expired.");
+        }
         setLoading(false);
       }
     };

@@ -99,9 +99,17 @@ const Messages = () => {
   }, []);
 
   useEffect(() => {
-    if (userId) {
-      socket.emit("joinUser", userId);
-    }
+    if (!userId) return undefined;
+
+    const joinUserRoom = () => socket.emit("joinUser", userId);
+    socket.on("connect", joinUserRoom);
+    socket.connect();
+    if (socket.connected) joinUserRoom();
+
+    return () => {
+      socket.off("connect", joinUserRoom);
+      socket.disconnect();
+    };
   }, [userId]);
 
   useEffect(() => {

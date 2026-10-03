@@ -8,7 +8,8 @@ const apiBaseUrl = trimTrailingSlash(
 
 const api = axios.create({
   baseURL: apiBaseUrl,
-  withCredentials: true, // send cookies
+  withCredentials: true,
+  timeout: Number(import.meta.env.VITE_API_TIMEOUT_MS || 15000),
 });
 
 api.interceptors.response.use(
